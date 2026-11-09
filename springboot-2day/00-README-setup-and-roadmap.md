@@ -88,6 +88,7 @@ springboot-2day/
     lesson-00/        working project at the END of lesson 00
     lesson-01/        working project at the END of lesson 01 (= lesson 00 + that lesson's changes)
     ...
+  tools/mdviewer.html     browser Markdown viewer (see below), mdviewer.png = its screenshot
   tools/check_lesson.py   my checker (not needed for studying)
 ```
 
@@ -98,7 +99,31 @@ springboot-2day/
 4. If a checkpoint does not match, compare your file with mine: `fc.exe yourfile "$REF\the\same\relative\path"` (`$REF` is set to that lesson's `reference/lesson-NN` folder; the lesson shows how). `FC: no differences encountered` means identical.
 5. Every lesson starts from the previous lesson's end state. If you fall behind, copy `reference/lesson-NN-1` into an empty folder and continue.
 
-Open each lesson's `README.md` in VS Code and press `Ctrl+Shift+V` for the preview, so the images show.
+Open each lesson's `README.md` in VS Code and press `Ctrl+Shift+V` for the preview, so the images show. No VS Code? Use the browser viewer below.
+
+### Viewing the lessons in a browser (`tools/mdviewer.html`)
+
+`tools/mdviewer.html` is a single-file Markdown viewer. Double-click it to open it in your browser (Chrome or Edge). It renders the lesson text, code highlighting, Mermaid diagrams and the SVG/PNG images. It needs internet once per session to load its scripts from a CDN. Nothing is uploaded anywhere; the page only reads the files you pick.
+
+![Markdown viewer with a folder picked and README.md selected](tools/mdviewer.png)
+
+**Option A: pick the folder (recommended, images show automatically)**
+1. Open `tools/mdviewer.html`.
+2. Under **1. Pick a folder**, click *Choose Files* and select the whole `springboot-2day` folder (or just one lesson folder, e.g. `day1\01-spring-core`). The browser asks "upload N files?". Confirm; this only lets the page read them.
+3. Under **2. Choose the Markdown file**, open the dropdown and select the file to read (for example `00-README-setup-and-roadmap.md` or `day1/01-spring-core/README.md`).
+4. The status line at the bottom of the box shows how many images were shown, for example `README.md: 5 image(s) shown`.
+
+**Option B: pick one `.md` file plus its images**
+1. Under **Or: select a .md file plus its images together**, click *Choose Files*.
+2. Ctrl+click the `README.md` and every image it uses (the `.svg` files in its `images` folder), then confirm.
+
+**Adding images that are missing**
+- A red box saying `image not found: images/xyz.svg` means the viewer has not seen that file yet.
+- Fix: pick the folder that contains the image (or the images themselves) with either picker. Picks **add up**, so you do not lose the file you were reading.
+- Click **Clear all picks** to start over with a different folder.
+- Keep images in the lesson's `images/` folder and link them relatively, as the lessons do: `![alt](images/diagram.svg)`.
+
+Tip: skipped automatically when indexing: `target`, `node_modules`, `.git` and `.mvn` folders.
 
 **Trust but verify:** my checker rebuilds each lesson from the code blocks in its README alone (starting from the previous lesson), compares the result with `reference/`, runs the build and tests, and checks the 11 headings. Every lesson listed above has passed it.
 

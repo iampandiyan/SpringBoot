@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 400" font-family="Arial, Helvetica, sans-serif">
+  <defs><marker id="a" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#333"/></marker></defs>
+  <rect width="900" height="400" fill="#ffffff"/>
+  <text x="450" y="30" text-anchor="middle" font-size="20" font-weight="bold" fill="#1a1a1a">Starters bring jars, auto-configuration creates beans</text>
+  <rect x="20" y="60" width="220" height="70" rx="8" fill="#fdebd0" stroke="#d68910" stroke-width="2"/><text x="130" y="88" text-anchor="middle" font-size="13" font-weight="bold">pom.xml dependency</text><text x="130" y="108" text-anchor="middle" font-size="12" font-family="Consolas, monospace">spring-boot-starter-web</text>
+  <rect x="300" y="45" width="250" height="100" rx="8" fill="#f2f3f4" stroke="#7f8c8d" stroke-width="2"/><text x="425" y="70" text-anchor="middle" font-size="13" font-weight="bold">Brings on the classpath</text><text x="425" y="92" text-anchor="middle" font-size="12">tomcat-embed-core</text><text x="425" y="110" text-anchor="middle" font-size="12">spring-webmvc</text><text x="425" y="128" text-anchor="middle" font-size="12">jackson-databind</text>
+  <rect x="610" y="45" width="270" height="100" rx="8" fill="#d5f5e3" stroke="#1e8449" stroke-width="2"/><text x="745" y="70" text-anchor="middle" font-size="13" font-weight="bold">Auto-configuration sees them</text><text x="745" y="92" text-anchor="middle" font-size="12">"Tomcat class present? yes"</text><text x="745" y="110" text-anchor="middle" font-size="12">"Do you define your own bean? no"</text><text x="745" y="128" text-anchor="middle" font-size="12">so create the default one</text>
+  <line x1="240" y1="95" x2="298" y2="95" stroke="#333" stroke-width="2" marker-end="url(#a)"/><line x1="550" y1="95" x2="608" y2="95" stroke="#333" stroke-width="2" marker-end="url(#a)"/>
+  <rect x="20" y="180" width="860" height="200" rx="10" fill="#fafafa" stroke="#bbb"/>
+  <text x="40" y="206" font-size="14" font-weight="bold">The decision rules (conditions on every auto-config class)</text>
+  <g font-size="12">
+    <rect x="40" y="220" width="250" height="70" rx="6" fill="#d6eaf8" stroke="#2874a6"/><text x="52" y="242" font-family="Consolas, monospace" font-weight="bold">@ConditionalOnClass</text><text x="52" y="262">apply only if a class is on</text><text x="52" y="278">the classpath</text>
+    <rect x="320" y="220" width="250" height="70" rx="6" fill="#d6eaf8" stroke="#2874a6"/><text x="332" y="242" font-family="Consolas, monospace" font-weight="bold">@ConditionalOnMissingBean</text><text x="332" y="262">back off if YOU defined the</text><text x="332" y="278">bean. Your config always wins</text>
+    <rect x="600" y="220" width="260" height="70" rx="6" fill="#d6eaf8" stroke="#2874a6"/><text x="612" y="242" font-family="Consolas, monospace" font-weight="bold">@ConditionalOnProperty</text><text x="612" y="262">switch on/off from</text><text x="612" y="278">application.yml</text>
+  </g>
+  <text x="40" y="320" font-size="12">See it yourself: run with <tspan font-family="Consolas, monospace" font-weight="bold">--debug</tspan> and read the "CONDITIONS EVALUATION REPORT" (Positive matches / Negative matches).</text>
+  <text x="40" y="344" font-size="12">Where the list lives: <tspan font-family="Consolas, monospace">META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports</tspan></text>
+  <text x="40" y="368" font-size="12" fill="#555">EJB comparison: like the app server giving you default resources (DataSource, JNDI), but decided by classpath and replaceable by your beans.</text>
+</svg>

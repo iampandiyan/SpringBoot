@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Markdown Viewer</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.2.0/github-markdown-light.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
+    <!-- Pinned versions: an unpinned CDN script can change its API under you. -->
+    <script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.9.1/mermaid.min.js"></script>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+               margin: 0; padding: 20px; background: #f6f8fa; color: #24292e; }
+        .container { max-width: 1000px; margin: 0 auto; background: #fff; padding: 30px;
+                     border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,.1); }
+        .uploader { margin-bottom: 20px; padding: 16px 20px; border: 2px dashed #d1d5da; border-radius: 6px; background: #fafbfc; }
+        .uploader label { font-weight: 600; display: block; margin-bottom: 6px; }
+        .uploader .row { margin: 10px 0; }
+        .uploader small { color: #6a737d; display: block; margin-top: 4px; }
+        select { font-size: 15px; padding: 4px; max-width: 100%; }
+        #status { color: #6a737d; font-size: 13px; margin-top: 8px; }
+        #status.warn { color: #b31d28; }
+        .markdown-body { box-sizing: border-box; min-width: 200px; margin: 0 auto; padding: 30px; }
+        .markdown-body img { max-width: 100%; height: auto; }
+        .missing-img { display: inline-block; padding: 6px 10px; border: 1px dashed #d73a49; color: #b31d28;
+                       background: #ffeef0; border-radius: 4px; font-size: 13px; }
+        @media (max-width: 767px) { .markdown-body { padding: 15px; } }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h2>Markdown Viewer</h2>
+
+    <div class="uploader">
+        <div class="row">
+            <label for="folderInput">1. Pick a folder (best: the whole <code>springboot-2day</code> folder, or one lesson folder)</label>
+            <input type="file" id="folderInput" webkitdirectory directory multiple>
+            <small>The browser asks "upload N files?". Nothing is uploaded anywhere, the files are only read by this page. Needed so images next to the .md file can be found.</small>
+        </div>
+        <div class="row">
+            <label for="mdSelect">2. Choose the Markdown file</label>
+            <select id="mdSelect" disabled><option>(pick a folder first)</option></select>
+        </div>
+        <div class="row">
+            <label for="fileInput">Or: select a .md file plus its images together (Ctrl+click several files)</label>
+            <input type="file" id="fileInput" multiple accept=".md,.markdown,image/*,.svg,.png,.jpg,.jpeg,.gif,.webp,.avif,.bmp,.ico">
+        </div>
+        <div class="row"><button id="clearBtn" type="button">Clear all picks</button> <small>Picks add up (folder + extra images). Clear to start over.</small></div>
+        <div id="status"></div>
+    </div>
+
+    <div id="output" class="markdown-body">
+        <p style="color:#6a737d;text-align:center">Pick a folder above, then choose a <code>.md</code> file.</p>
+    </div>
+</div>
+
+<script>
+    mermaid.initialize({ startOnLoad: false });
+
+    // MIME types, so images (especially SVG) render even when the browser gives File.type = "".
+    const MIME = { png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', gif: 'image/gif', svg: 'image/svg+xml',
+                   webp: 'image/webp', avif: 'image/avif', bmp: 'image/bmp', ico: 'image/x-icon', apng: 'image/apng',
+                   tif: 'image/tiff', tiff: 'image/tiff' };
+
+    const folderInput = document.getElementById('folderInput');
+    const fileInput   = document.getElementById('fileInput');
+    const mdSelect    = document.getElementById('mdSelect');
+    const output      = document.getElementById('output');
+    const statusEl    = document.getElementById('status');
+
+    let fileMap = new Map();      // normalized path (lower-case) -> File (accumulates across picks)
+    let currentMd = null;         // path of the markdown file on screen
+    let blobUrls = [];            // to free memory on re-render
+
+    function setStatus(msg, warn) { statusEl.textContent = msg; statusEl.className = warn ? 'warn' : ''; }
+
+    // "a/b/../c/./d.png" -> "a/c/d.png"
+    function normalize(path) {
+        const out = [];
+        for (const part of path.replace(/\\/g, '/').split('/')) {
+            if (part === '' || part === '.') continue;
+            if (part === '..') out.pop(); else out.push(part);
+        }
+        return out.join('/');
+    }
+    function dirname(p) { const i = p.lastIndexOf('/'); return i < 0 ? '' : p.slice(0, i); }
+    function ext(p) { const m = /\.([A-Za-z0-9]+)$/.exec(p.split('?')[0]); return m ? m[1].toLowerCase() : ''; }
+    function isExternal(u) { return /^([a-z][a-z0-9+.-]*:|\/\/|#)/i.test(u); }   // http:, https:, data:, blob:, mailto:, //host, #anchor
+
+    function pathOf(file) { return normalize(file.webkitRelativePath || file.name); }
+
+    function indexFiles(files) {          // ADD to the index, never replace it
+        for (const f of files) fileMap.set(pathOf(f).toLowerCase(), f);
+    }
+
+    function blobUrlFor(file, path) {
+        const type = MIME[ext(path)] || file.type || 'application/octet-stream';
+        const url = URL.createObjectURL(new Blob([file], { type }));
+        blobUrls.push(url);
+        return url;
+    }
+
+    // Find the File for a link written in the markdown, relative to the .md file's folder.
+    function resolve(mdPath, link) {
+        let rel = decodeURIComponent(link.split('#')[0].split('?')[0]);
+        const base = dirname(mdPath);
+        const tries = [normalize(base ? base + '/' + rel : rel), normalize(rel)];   // 2nd: flat selection (md + images picked together)
+        // flat selection has no folders: also try just the file name
+        tries.push(rel.split('/').pop());
+        for (const t of tries) {
+            const f = fileMap.get(t.toLowerCase());
+            if (f) return { file: f, path: t };
+        }
+        // Fallback: a picked file whose path ENDS with the link (e.g. picked the images folder on its own).
+        const want = normalize(rel).toLowerCase().replace(/^(\.\.\/)+/, '');
+        const hits = [];
+        for (const [k, f] of fileMap) if (k === want || k.endsWith('/' + want)) hits.push([k, f]);
+        if (hits.length) {
+            // prefer the candidate living closest to the md file's folder
+            const b = base.toLowerCase();
+            hits.sort((x, y) => (y[0].startsWith(b) ? 1 : 0) - (x[0].startsWith(b) ? 1 : 0));
+            return { file: hits[0][1], path: hits[0][0] };
+        }
+        return null;
+    }
+
+    async function renderMarkdown(mdText, mdPath) {
+        currentMd = mdPath;
+        blobUrls.forEach(u => URL.revokeObjectURL(u)); blobUrls = [];
+        output.innerHTML = marked.parse(mdText);
+
+        // 1. images (any type): relative src -> blob URL of the matching local file
+        let missing = [];
+        output.querySelectorAll('img').forEach(img => {
+            const src = img.getAttribute('src') || '';
+            if (!src || isExternal(src)) return;                  // http(s)/data: URLs work as they are
+            const hit = resolve(mdPath, src);
+            if (hit) { img.src = blobUrlFor(hit.file, hit.path); }
+            else {
+                missing.push(src);
+                const span = document.createElement('span');
+                span.className = 'missing-img';
+                span.textContent = 'image not found: ' + src + ' (pick the folder that contains it)';
+                img.replaceWith(span);
+            }
+        });
+
+        // 2. links to local files (e.g. a clickable image that opens the .svg): open them in a new tab
+        output.querySelectorAll('a[href]').forEach(a => {
+            const href = a.getAttribute('href');
+            if (!href || isExternal(href)) { if (/^https?:/i.test(href || '')) a.target = '_blank'; return; }
+            const e = ext(href);
+            if (MIME[e]) {
+                const hit = resolve(mdPath, href);
+                if (hit) { a.href = blobUrlFor(hit.file, hit.path); a.target = '_blank'; }
+            } else if (e === 'md') {
+                const hit = resolve(mdPath, href);
+                if (hit) { a.addEventListener('click', ev => { ev.preventDefault(); openFile(hit.file, hit.path); }); }
+            }
+        });
+
+        // 3. syntax highlighting and mermaid diagrams
+        output.querySelectorAll('pre code').forEach(block => {
+            if (block.classList.contains('language-mermaid')) {
+                const div = document.createElement('div');
+                div.className = 'mermaid';
+                div.textContent = block.textContent;
+                block.closest('pre').replaceWith(div);
+            } else {
+                try { hljs.highlightElement(block); } catch (e) {}
+            }
+        });
+        try { await mermaid.run({ querySelector: '.mermaid' }); } catch (e) {}
+
+        const imgCount = output.querySelectorAll('img').length;
+        setStatus(`${mdPath}: ${imgCount} image(s) shown` + (missing.length ? `, ${missing.length} missing` : ''), missing.length > 0);
+        window.scrollTo(0, 0);
+    }
+
+    async function openFile(file, path) {        // resolves when the page is fully rendered
+        try {
+            const text = await file.text();
+            await renderMarkdown(text, path);
+        } catch (e) {
+            output.innerHTML = '<p style="color:red">Error reading file: ' + String(e) + '</p>';
+        }
+    }
+
+    function populateSelect(mdFiles) {
+        mdSelect.innerHTML = '';
+        mdFiles.sort((a, b) => pathOf(a).localeCompare(pathOf(b), undefined, { numeric: true }));
+        for (const f of mdFiles) {
+            const o = document.createElement('option');
+            o.value = pathOf(f); o.textContent = pathOf(f);
+            mdSelect.appendChild(o);
+        }
+        mdSelect.disabled = mdFiles.length === 0;
+    }
+
+    async function handleFiles(files) {
+        const incoming = Array.from(files).filter(f => !/(^|\/)(target|node_modules|\.git|\.mvn)\//.test(pathOf(f)));
+        indexFiles(incoming);                                   // merge with earlier picks
+        const all = Array.from(fileMap.values());
+        const mds = all.filter(f => /\.(md|markdown)$/i.test(f.name));
+        populateSelect(mds);
+        if (!mds.length) { setStatus(`${all.length} file(s) indexed so far, but no .md file yet. Now pick the .md file or its folder.`, true); return; }
+
+        const newMds = incoming.filter(f => /\.(md|markdown)$/i.test(f.name));
+        if (newMds.length) {                                    // a markdown file arrived: show it
+            const pick = newMds.find(f => /(^|\/)README\.md$/i.test(pathOf(f))) || newMds[0];
+            mdSelect.value = pathOf(pick);
+            await openFile(pick, pathOf(pick));
+        } else if (currentMd) {                                 // only images arrived: redraw what is on screen
+            mdSelect.value = currentMd;
+            const f = fileMap.get(currentMd.toLowerCase());
+            if (f) await openFile(f, currentMd);
+        }
+    }
+
+    document.getElementById('clearBtn').addEventListener('click', () => {
+        fileMap = new Map(); currentMd = null; folderInput.value = ''; fileInput.value = '';
+        mdSelect.innerHTML = '<option>(pick a folder first)</option>'; mdSelect.disabled = true;
+        output.innerHTML = '<p style="color:#6a737d;text-align:center">Cleared.</p>'; setStatus('');
+    });
+
+    folderInput.addEventListener('change', e => handleFiles(e.target.files));
+    fileInput.addEventListener('change', e => handleFiles(e.target.files));
+    mdSelect.addEventListener('change', () => {
+        const f = fileMap.get(mdSelect.value.toLowerCase());
+        if (f) openFile(f, mdSelect.value);
+    });
+
+    // exposed for testing
+    window.__viewer = { handleFiles, renderMarkdown, indexFiles, resolve, files: () => Array.from(fileMap.keys()) };
+</script>
+</body>
+</html>

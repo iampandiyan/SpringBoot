@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 540" font-family="Arial, Helvetica, sans-serif">
+  <defs><marker id="a" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#333"/></marker></defs>
+  <rect width="900" height="540" fill="#ffffff"/>
+  <text x="450" y="30" text-anchor="middle" font-size="20" font-weight="bold" fill="#1a1a1a">The problem Maven solves</text>
+
+  <!-- LEFT: without maven -->
+  <rect x="20" y="50" width="420" height="420" rx="10" fill="#fdedec" stroke="#c0392b" stroke-width="2"/>
+  <text x="230" y="78" text-anchor="middle" font-size="16" font-weight="bold" fill="#922b21">WITHOUT a build tool (by hand)</text>
+  <g font-size="12" fill="#222">
+    <text x="40" y="108" font-weight="bold">1. Find and download every jar yourself</text>
+    <text x="55" y="126" fill="#555">spring-web.jar, tomcat-embed.jar, jackson-*.jar ... (60+ files)</text>
+    <text x="40" y="156" font-weight="bold">2. Guess compatible versions</text>
+    <text x="55" y="174" fill="#555">jackson 2.21 + spring 6.2 + tomcat 10.1? Wrong mix = runtime crash</text>
+    <text x="40" y="204" font-weight="bold">3. Chase the jars your jars need</text>
+    <text x="55" y="222" fill="#555">every library depends on other libraries (transitive)</text>
+    <text x="40" y="252" font-weight="bold">4. Type a very long compile command</text>
+  </g>
+  <rect x="40" y="260" width="380" height="52" rx="6" fill="#2c3e50"/>
+  <text x="50" y="280" font-size="11" font-family="Consolas, monospace" fill="#ecf0f1">javac -cp lib\a.jar;lib\b.jar;lib\c.jar;... -d out</text>
+  <text x="50" y="298" font-size="11" font-family="Consolas, monospace" fill="#ecf0f1">  src\com\example\...\*.java   (and again for tests)</text>
+  <g font-size="12" fill="#222">
+    <text x="40" y="342" font-weight="bold">5. Run tests, build the jar, copy it around by hand</text>
+    <text x="40" y="372" font-weight="bold">6. Every teammate and the CI server repeat 1 to 5</text>
+    <text x="55" y="390" fill="#555">"works on my machine" because the folders and versions differ</text>
+  </g>
+  <text x="230" y="440" text-anchor="middle" font-size="13" font-weight="bold" fill="#922b21">Slow, error-prone, not repeatable</text>
+  <text x="230" y="458" text-anchor="middle" font-size="11" fill="#922b21">(Ant fixed step 4 only: you still had to list jars by hand)</text>
+
+  <!-- arrow -->
+  <g stroke="#333" stroke-width="3" marker-end="url(#a)"><line x1="446" y1="260" x2="474" y2="260"/></g>
+
+  <!-- RIGHT: with maven -->
+  <rect x="480" y="50" width="400" height="420" rx="10" fill="#eafaf1" stroke="#1e8449" stroke-width="2"/>
+  <text x="680" y="78" text-anchor="middle" font-size="16" font-weight="bold" fill="#1e8449">WITH Maven (declare, then run)</text>
+  <g font-size="12" text-anchor="middle">
+    <rect x="510" y="95" width="340" height="62" rx="8" fill="#d6eaf8" stroke="#2874a6" stroke-width="2"/>
+    <text x="680" y="118" font-weight="bold">1. You write pom.xml (what you need)</text>
+    <text x="680" y="138">spring-boot-starter-web   (no version, no jar list)</text>
+    <rect x="510" y="177" width="340" height="62" rx="8" fill="#fdebd0" stroke="#d68910" stroke-width="2"/>
+    <text x="680" y="200" font-weight="bold">2. Maven downloads jars + their jars</text>
+    <text x="680" y="220">from Maven Central, caches them in .m2</text>
+    <rect x="510" y="259" width="340" height="62" rx="8" fill="#eaf2f8" stroke="#2874a6" stroke-width="2"/>
+    <text x="680" y="282" font-weight="bold">3. One standard command</text>
+    <text x="680" y="302" font-family="Consolas, monospace">.\mvnw.cmd clean verify</text>
+    <rect x="510" y="341" width="340" height="62" rx="8" fill="#eaf2f8" stroke="#2874a6" stroke-width="2"/>
+    <text x="680" y="364" font-weight="bold">4. Compile, test, package happen in order</text>
+    <text x="680" y="384">output: target/trade-service-0.0.1-SNAPSHOT.jar</text>
+  </g>
+  <g stroke="#333" stroke-width="2" marker-end="url(#a)"><line x1="680" y1="157" x2="680" y2="175"/><line x1="680" y1="239" x2="680" y2="257"/><line x1="680" y1="321" x2="680" y2="339"/></g>
+  <text x="680" y="440" text-anchor="middle" font-size="13" font-weight="bold" fill="#1e8449">Same result on every laptop and in CI</text>
+  <text x="680" y="458" text-anchor="middle" font-size="11" fill="#1e8449">Convention: sources in src/main/java, output in target/</text>
+
+  <!-- bottom summary -->
+  <text x="450" y="500" text-anchor="middle" font-size="13" fill="#1a1a1a"><tspan font-weight="bold">Maven in one line:</tspan> a build tool that manages dependencies and runs a standard build lifecycle,</text>
+  <text x="450" y="520" text-anchor="middle" font-size="13" fill="#1a1a1a">driven by a declarative description of the project (pom.xml).</text>
+</svg>

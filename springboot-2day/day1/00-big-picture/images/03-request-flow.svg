@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 400" font-family="Arial, Helvetica, sans-serif">
+  <defs><marker id="a" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#333"/></marker></defs>
+  <rect width="900" height="400" fill="#ffffff"/>
+  <text x="450" y="30" text-anchor="middle" font-size="20" font-weight="bold" fill="#1a1a1a">One HTTP request: POST /trades</text>
+  <g font-size="12" text-anchor="middle">
+    <rect x="15" y="70" width="110" height="60" rx="8" fill="#eaf2f8" stroke="#2874a6"/><text x="70" y="97">1. Client</text><text x="70" y="115">curl POST JSON</text>
+    <rect x="150" y="70" width="120" height="60" rx="8" fill="#f2f3f4" stroke="#7f8c8d"/><text x="210" y="97">2. Embedded</text><text x="210" y="115">Tomcat (port 8080)</text>
+    <rect x="295" y="70" width="130" height="60" rx="8" fill="#fdebd0" stroke="#d68910"/><text x="360" y="97">3. DispatcherServlet</text><text x="360" y="115">front controller</text>
+    <rect x="450" y="70" width="130" height="60" rx="8" fill="#fdebd0" stroke="#d68910"/><text x="515" y="97">4. HandlerMapping</text><text x="515" y="115">URL to method</text>
+    <rect x="605" y="70" width="130" height="60" rx="8" fill="#d6eaf8" stroke="#2874a6"/><text x="670" y="97">5. Jackson</text><text x="670" y="115">JSON to Java record</text>
+    <rect x="760" y="70" width="125" height="60" rx="8" fill="#d6eaf8" stroke="#2874a6"/><text x="822" y="97">6. TradeController</text><text x="822" y="115">create(req)</text>
+    <rect x="760" y="200" width="125" height="60" rx="8" fill="#d5f5e3" stroke="#1e8449"/><text x="822" y="227">7. TradeService</text><text x="822" y="245">(proxy then real)</text>
+    <rect x="605" y="200" width="130" height="60" rx="8" fill="#fdebd0" stroke="#d68910"/><text x="670" y="227">8. TradeRepository</text><text x="670" y="245">save()</text>
+    <rect x="450" y="310" width="130" height="60" rx="8" fill="#d6eaf8" stroke="#2874a6"/><text x="515" y="337">9. Jackson</text><text x="515" y="355">Java to JSON</text>
+    <rect x="150" y="310" width="275" height="60" rx="8" fill="#eaf2f8" stroke="#2874a6"/><text x="287" y="337">10. HTTP 200 + JSON body back</text><text x="287" y="355">{"id":1,"status":"NEW"...}</text>
+  </g>
+  <g stroke="#333" stroke-width="2" marker-end="url(#a)" fill="none">
+    <line x1="125" y1="100" x2="148" y2="100"/><line x1="270" y1="100" x2="293" y2="100"/><line x1="425" y1="100" x2="448" y2="100"/><line x1="580" y1="100" x2="603" y2="100"/><line x1="735" y1="100" x2="758" y2="100"/>
+    <line x1="822" y1="130" x2="822" y2="198"/><line x1="760" y1="230" x2="737" y2="230"/>
+    <path d="M670,260 L670,285 L515,285 L515,308"/><line x1="450" y1="340" x2="427" y2="340"/>
+  </g>
+  <text x="450" y="395" text-anchor="middle" font-size="12" fill="#555">Return path: repository to service to controller to Jackson to Tomcat to client. You write only steps 6, 7 and 8.</text>
+</svg>

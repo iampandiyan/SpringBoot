@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 520" font-family="Arial, Helvetica, sans-serif">
+  <defs><marker id="a" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#333"/></marker></defs>
+  <rect width="900" height="520" fill="#ffffff"/>
+  <text x="450" y="30" text-anchor="middle" font-size="20" font-weight="bold" fill="#1a1a1a">The default lifecycle: ask for one phase, get everything before it</text>
+
+  <!-- phases -->
+  <g font-size="13" text-anchor="middle" font-weight="bold">
+    <rect x="20" y="60" width="115" height="60" rx="8" fill="#f2f3f4" stroke="#7f8c8d" stroke-width="2"/><text x="77" y="86">validate</text><text x="77" y="104" font-size="11" font-weight="normal" fill="#555">pom is correct</text>
+    <rect x="160" y="60" width="115" height="60" rx="8" fill="#eaf2f8" stroke="#2874a6" stroke-width="2"/><text x="217" y="86">compile</text><text x="217" y="104" font-size="11" font-weight="normal" fill="#555">.java to .class</text>
+    <rect x="300" y="60" width="115" height="60" rx="8" fill="#d5f5e3" stroke="#1e8449" stroke-width="2"/><text x="357" y="86">test</text><text x="357" y="104" font-size="11" font-weight="normal" fill="#555">unit tests</text>
+    <rect x="440" y="60" width="115" height="60" rx="8" fill="#fdebd0" stroke="#d68910" stroke-width="2"/><text x="497" y="86">package</text><text x="497" y="104" font-size="11" font-weight="normal" fill="#555">jar in target/</text>
+    <rect x="580" y="60" width="115" height="60" rx="8" fill="#fdebd0" stroke="#d68910" stroke-width="2"/><text x="637" y="86">verify</text><text x="637" y="104" font-size="11" font-weight="normal" fill="#555">integration checks</text>
+    <rect x="720" y="60" width="75" height="60" rx="8" fill="#f4ecf7" stroke="#8e44ad" stroke-width="2"/><text x="757" y="86">install</text><text x="757" y="104" font-size="11" font-weight="normal" fill="#555">to .m2</text>
+    <rect x="810" y="60" width="75" height="60" rx="8" fill="#f4ecf7" stroke="#8e44ad" stroke-width="2"/><text x="847" y="86">deploy</text><text x="847" y="104" font-size="11" font-weight="normal" fill="#555">to remote</text>
+  </g>
+  <g stroke="#333" stroke-width="2" marker-end="url(#a)"><line x1="135" y1="90" x2="158" y2="90"/><line x1="275" y1="90" x2="298" y2="90"/><line x1="415" y1="90" x2="438" y2="90"/><line x1="555" y1="90" x2="578" y2="90"/><line x1="695" y1="90" x2="718" y2="90"/><line x1="795" y1="90" x2="808" y2="90"/></g>
+
+  <!-- brackets showing how far each command goes -->
+  <g font-size="12" font-family="Consolas, monospace">
+    <path d="M20,140 L20,148 L275,148 L275,140" fill="none" stroke="#2874a6" stroke-width="2"/>
+    <text x="147" y="166" text-anchor="middle" fill="#2874a6">mvnw compile</text>
+    <path d="M20,176 L20,184 L415,184 L415,176" fill="none" stroke="#1e8449" stroke-width="2"/>
+    <text x="217" y="202" text-anchor="middle" fill="#1e8449">mvnw test</text>
+    <path d="M20,212 L20,220 L555,220 L555,212" fill="none" stroke="#d68910" stroke-width="2"/>
+    <text x="287" y="238" text-anchor="middle" fill="#d68910">mvnw package</text>
+    <path d="M20,248 L20,256 L695,256 L695,248" fill="none" stroke="#d68910" stroke-width="2"/>
+    <text x="357" y="274" text-anchor="middle" fill="#d68910">mvnw verify</text>
+    <path d="M20,284 L20,292 L795,292 L795,284" fill="none" stroke="#8e44ad" stroke-width="2"/>
+    <text x="407" y="310" text-anchor="middle" fill="#8e44ad">mvnw install   (copies the jar into C:\Users\you\.m2\repository)</text>
+  </g>
+  <text x="840" y="196" text-anchor="middle" font-size="11" fill="#555">deploy needs a</text>
+  <text x="840" y="210" text-anchor="middle" font-size="11" fill="#555">remote repo set</text>
+  <text x="840" y="224" text-anchor="middle" font-size="11" fill="#555">in distribution-</text>
+  <text x="840" y="238" text-anchor="middle" font-size="11" fill="#555">Management; CI</text>
+  <text x="840" y="252" text-anchor="middle" font-size="11" fill="#555">does it, not you.</text>
+
+  <!-- the three lifecycles -->
+  <text x="20" y="352" font-size="14" font-weight="bold">Maven has three separate lifecycles. Only the first is used every day.</text>
+  <g font-size="12">
+    <rect x="20" y="366" width="270" height="86" rx="8" fill="#eaf2f8" stroke="#2874a6" stroke-width="2"/>
+    <text x="30" y="388" font-weight="bold">default</text>
+    <text x="30" y="406">validate ... deploy (the picture above)</text>
+    <text x="30" y="424">builds and ships the project</text>
+    <text x="30" y="440" fill="#555">mvnw package</text>
+    <rect x="315" y="366" width="270" height="86" rx="8" fill="#fdedec" stroke="#c0392b" stroke-width="2"/>
+    <text x="325" y="388" font-weight="bold">clean</text>
+    <text x="325" y="406">pre-clean, clean, post-clean</text>
+    <text x="325" y="424">deletes the target/ folder</text>
+    <text x="325" y="440" fill="#555">mvnw clean   (so write clean package)</text>
+    <rect x="610" y="366" width="270" height="86" rx="8" fill="#f2f3f4" stroke="#7f8c8d" stroke-width="2"/>
+    <text x="620" y="388" font-weight="bold">site</text>
+    <text x="620" y="406">generates project web-site reports</text>
+    <text x="620" y="424">rarely used in application work</text>
+    <text x="620" y="440" fill="#555">mvnw site</text>
+  </g>
+  <text x="450" y="482" text-anchor="middle" font-size="12" fill="#444">Which plugin does the work in each phase is fixed by the packaging type (jar), plus plugins your pom adds.</text>
+  <text x="450" y="500" text-anchor="middle" font-size="12" fill="#444">See it for any phase:  .\mvnw.cmd help:describe "-Dcmd=compile"</text>
+</svg>

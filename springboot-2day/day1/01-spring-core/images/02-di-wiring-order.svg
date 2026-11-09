@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 330" font-family="Arial, Helvetica, sans-serif">
+  <defs><marker id="a" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#333"/></marker></defs>
+  <rect width="900" height="330" fill="#ffffff"/>
+  <text x="450" y="30" text-anchor="middle" font-size="20" font-weight="bold" fill="#1a1a1a">How Spring builds our beans (dependency order)</text>
+  <g font-size="12" text-anchor="middle">
+    <rect x="20" y="70" width="190" height="64" rx="8" fill="#fdebd0" stroke="#d68910" stroke-width="2"/><text x="115" y="95" font-weight="bold">1. InMemoryTradeRepository</text><text x="115" y="115">no dependencies: built first</text>
+    <rect x="250" y="70" width="190" height="64" rx="8" fill="#d5f5e3" stroke="#1e8449" stroke-width="2"/><text x="345" y="95" font-weight="bold">2. TradeService</text><text x="345" y="115">needs TradeRepository</text>
+    <rect x="480" y="70" width="190" height="64" rx="8" fill="#f5eef8" stroke="#7d3c98" stroke-width="2"/><text x="575" y="95" font-weight="bold">3. TimingAspect</text><text x="575" y="115">wraps TradeService</text>
+    <rect x="710" y="70" width="170" height="64" rx="8" fill="#d6eaf8" stroke="#2874a6" stroke-width="2"/><text x="795" y="95" font-weight="bold">4. TradeController</text><text x="795" y="115">needs TradeService</text>
+  </g>
+  <g stroke="#333" stroke-width="2" marker-end="url(#a)"><line x1="210" y1="102" x2="248" y2="102"/><line x1="440" y1="102" x2="478" y2="102"/><line x1="670" y1="102" x2="708" y2="102"/></g>
+  <rect x="20" y="170" width="860" height="140" rx="10" fill="#fafafa" stroke="#bbb"/>
+  <text x="40" y="195" font-size="13" font-weight="bold">What the controller really receives</text>
+  <text x="40" y="220" font-size="12">Because TimingAspect matches TradeService, Spring does not hand out the raw TradeService.</text>
+  <text x="40" y="240" font-size="12">It hands out a generated subclass: <tspan font-family="Consolas, monospace" font-weight="bold">TradeService$$SpringCGLIB$$0</tspan> (the proxy) holding the real object inside.</text>
+  <text x="40" y="270" font-size="12">Injection by constructor, resolved by TYPE:  public TradeController(TradeService service)</text>
+  <text x="40" y="290" font-size="12" fill="#555">Two beans of the same type would fail with NoUniqueBeanDefinitionException unless you use @Primary or @Qualifier.</text>
+</svg>

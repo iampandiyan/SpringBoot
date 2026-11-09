@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 470" font-family="Arial, Helvetica, sans-serif">
+  <rect width="900" height="470" fill="#ffffff"/>
+  <text x="450" y="28" text-anchor="middle" font-size="19" font-weight="bold" fill="#1a1a1a">Your folder after each step (green = new in this step)</text>
+  <g font-size="11" font-family="Consolas, monospace">
+    <rect x="15" y="45" width="170" height="410" rx="8" fill="#f8f9f9" stroke="#999"/>
+    <text x="25" y="65" font-family="Arial" font-weight="bold" font-size="13">After step 2</text>
+    <text x="25" y="88">trade-service/</text>
+    <text x="37" y="106" fill="#1e8449">pom.xml</text>
+    <text x="37" y="124" fill="#1e8449">.mvn/ mvnw mvnw.cmd</text>
+    <text x="37" y="142" fill="#1e8449">src/main/java/</text>
+    <text x="49" y="160" fill="#1e8449">com/example/trade/</text>
+    <text x="61" y="178" fill="#1e8449">TradeService</text>
+    <text x="61" y="194" fill="#1e8449">Application.java</text>
+    <text x="25" y="230" font-family="Arial" font-size="11">App starts. Every URL</text>
+    <text x="25" y="246" font-family="Arial" font-size="11">answers 404.</text>
+
+    <rect x="195" y="45" width="170" height="410" rx="8" fill="#f8f9f9" stroke="#999"/>
+    <text x="205" y="65" font-family="Arial" font-weight="bold" font-size="13">After steps 3-4</text>
+    <text x="205" y="88">trade-service/</text>
+    <text x="217" y="106">pom.xml ...</text>
+    <text x="217" y="124">src/main/java/</text>
+    <text x="229" y="142">com/example/trade/</text>
+    <text x="241" y="160">TradeService</text>
+    <text x="241" y="176">Application.java</text>
+    <text x="241" y="194" fill="#1e8449">domain/</text>
+    <text x="253" y="210" fill="#1e8449">Trade.java</text>
+    <text x="253" y="226" fill="#1e8449">TradeStatus.java</text>
+    <text x="241" y="244" fill="#1e8449">repo/</text>
+    <text x="253" y="260" fill="#1e8449">TradeRepository</text>
+    <text x="253" y="276" fill="#1e8449">InMemoryTrade</text>
+    <text x="253" y="290" fill="#1e8449">Repository</text>
+    <text x="205" y="326" font-family="Arial" font-size="11">Compiles. Nothing</text>
+    <text x="205" y="342" font-family="Arial" font-size="11">visible yet.</text>
+
+    <rect x="375" y="45" width="170" height="410" rx="8" fill="#f8f9f9" stroke="#999"/>
+    <text x="385" y="65" font-family="Arial" font-weight="bold" font-size="13">After steps 5-6</text>
+    <text x="385" y="88">trade-service/</text>
+    <text x="397" y="106">pom.xml ...</text>
+    <text x="397" y="124">src/main/java/</text>
+    <text x="409" y="142">com/example/trade/</text>
+    <text x="421" y="160">TradeService...</text>
+    <text x="421" y="178">domain/ repo/</text>
+    <text x="421" y="196" fill="#1e8449">service/</text>
+    <text x="433" y="212" fill="#1e8449">TradeService.java</text>
+    <text x="421" y="230" fill="#1e8449">web/</text>
+    <text x="433" y="246" fill="#1e8449">TradeController</text>
+    <text x="433" y="262" fill="#1e8449">.java</text>
+    <text x="385" y="298" font-family="Arial" font-size="11">curl creates and</text>
+    <text x="385" y="314" font-family="Arial" font-size="11">settles a trade.</text>
+
+    <rect x="555" y="45" width="170" height="410" rx="8" fill="#f8f9f9" stroke="#999"/>
+    <text x="565" y="65" font-family="Arial" font-weight="bold" font-size="13">After step 7-8</text>
+    <text x="565" y="88">trade-service/</text>
+    <text x="577" y="106">pom.xml ...</text>
+    <text x="577" y="124">src/main/java/ ...</text>
+    <text x="577" y="142" fill="#1e8449">src/test/java/</text>
+    <text x="589" y="160" fill="#1e8449">com/example/trade/</text>
+    <text x="601" y="178" fill="#1e8449">TradeService</text>
+    <text x="601" y="194" fill="#1e8449">Test.java</text>
+    <text x="577" y="224" fill="#1e8449">.vscode/</text>
+    <text x="589" y="240" fill="#1e8449">launch.json</text>
+    <text x="577" y="258" fill="#1e8449">.gitignore</text>
+    <text x="565" y="294" font-family="Arial" font-size="11">Test passes. F5 runs</text>
+    <text x="565" y="310" font-family="Arial" font-size="11">and debugs.</text>
+
+    <rect x="735" y="45" width="150" height="410" rx="8" fill="#eefaf1" stroke="#1e8449"/>
+    <text x="745" y="65" font-family="Arial" font-weight="bold" font-size="13">If you get lost</text>
+    <text x="745" y="90" font-family="Arial" font-size="11">Compare with</text>
+    <text x="745" y="108" font-family="Arial" font-size="11" font-weight="bold">reference/lesson-00</text>
+    <text x="745" y="136" font-family="Arial" font-size="11">Same tree, same file</text>
+    <text x="745" y="152" font-family="Arial" font-size="11">names. Open the file,</text>
+    <text x="745" y="168" font-family="Arial" font-size="11">compare line by line,</text>
+    <text x="745" y="184" font-family="Arial" font-size="11">or run the compare</text>
+    <text x="745" y="200" font-family="Arial" font-size="11">command from the</text>
+    <text x="745" y="216" font-family="Arial" font-size="11">Stuck? note.</text>
+  </g>
+</svg>

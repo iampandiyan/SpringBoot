@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 480" font-family="Arial, Helvetica, sans-serif">
+  <rect width="900" height="480" fill="#ffffff"/>
+  <text x="450" y="26" text-anchor="middle" font-size="18" font-weight="bold" fill="#1a1a1a">VS Code: where to click (a drawing, your colours will differ)</text>
+  <rect x="20" y="40" width="860" height="400" rx="8" fill="#1e1e1e" stroke="#555" stroke-width="2"/>
+  <!-- activity bar -->
+  <rect x="20" y="40" width="56" height="370" fill="#333"/>
+  <g font-size="10" fill="#ddd" text-anchor="middle">
+    <rect x="30" y="52" width="36" height="36" rx="4" fill="#0e639c"/><text x="48" y="74">Files</text>
+    <rect x="30" y="98" width="36" height="36" rx="4" fill="#444"/><text x="48" y="120">Search</text>
+    <rect x="30" y="144" width="36" height="36" rx="4" fill="#444"/><text x="48" y="166">Run</text>
+    <rect x="30" y="190" width="36" height="36" rx="4" fill="#444"/><text x="48" y="212">Ext.</text>
+  </g>
+  <!-- explorer -->
+  <rect x="76" y="40" width="230" height="370" fill="#252526"/>
+  <g font-size="11" fill="#ddd" font-family="Consolas, monospace">
+    <text x="86" y="62" font-weight="bold">EXPLORER</text>
+    <text x="86" y="86">v trade-service</text>
+    <text x="98" y="106">&gt; .mvn</text>
+    <text x="98" y="126">v src/main/java</text>
+    <text x="110" y="146">v com.example.trade</text>
+    <text x="122" y="166">&gt; domain</text>
+    <text x="122" y="186">&gt; repo</text>
+    <text x="122" y="206">&gt; service</text>
+    <text x="122" y="226">&gt; web</text>
+    <text x="122" y="246" fill="#4ec9b0">TradeServiceApplication.java</text>
+    <text x="98" y="266">&gt; src/test/java</text>
+    <text x="98" y="286">mvnw.cmd</text>
+    <text x="98" y="306" fill="#e2c08d">pom.xml</text>
+  </g>
+  <!-- editor -->
+  <rect x="306" y="40" width="574" height="230" fill="#1e1e1e"/>
+  <rect x="306" y="40" width="574" height="26" fill="#2d2d2d"/><text x="320" y="58" font-size="12" fill="#fff">TradeServiceApplication.java</text>
+  <g font-size="12" fill="#d4d4d4" font-family="Consolas, monospace">
+    <text x="330" y="92">@SpringBootApplication</text>
+    <text x="330" y="112">public class TradeServiceApplication {</text>
+    <text x="330" y="132">    public static void main(String[] args) {</text>
+    <text x="330" y="152">        SpringApplication.run(...);</text>
+  </g>
+  <circle cx="318" cy="148" r="5" fill="#e51400"/>
+  <!-- terminal -->
+  <rect x="306" y="270" width="574" height="140" fill="#181818"/>
+  <rect x="306" y="270" width="574" height="24" fill="#2d2d2d"/><text x="320" y="287" font-size="12" fill="#fff">TERMINAL</text>
+  <g font-size="12" fill="#d4d4d4" font-family="Consolas, monospace">
+    <text x="320" y="318">PS C:\study\trade-service&gt; .\mvnw.cmd -q spring-boot:run</text>
+    <text x="320" y="338">... Started TradeServiceApplication in 2.1 seconds</text>
+  </g>
+  <rect x="20" y="410" width="860" height="30" fill="#007acc"/><text x="34" y="430" font-size="12" fill="#fff">Java: Ready</text>
+  <!-- callout badges -->
+  <g font-size="13" font-weight="bold" text-anchor="middle">
+    <circle cx="64" cy="148" r="11" fill="#f39c12"/><text x="64" y="153" fill="#000">B</text>
+    <circle cx="290" cy="52" r="11" fill="#f39c12"/><text x="290" y="57" fill="#000">C</text>
+    <circle cx="400" cy="282" r="11" fill="#f39c12"/><text x="400" y="287" fill="#000">A</text>
+    <circle cx="318" cy="168" r="0" fill="none"/>
+  </g>
+  <g font-size="11" fill="#f5c26b" font-family="Consolas, monospace">
+    <text x="640" y="92">A = Terminal (View menu, Terminal).</text>
+    <text x="640" y="110">    Type every command here.</text>
+    <text x="640" y="134">B = Run/Debug icon (or press F5)</text>
+    <text x="640" y="158">C = Explorer: right-click to make</text>
+    <text x="640" y="174">    new files and folders</text>
+    <text x="640" y="198">Red dot = breakpoint (click left of</text>
+    <text x="640" y="214">    a line number to set one)</text>
+  </g>
+  <text x="20" y="466" font-size="12" fill="#555">A, B, C are the three places you will use in every lesson.</text>
+</svg>

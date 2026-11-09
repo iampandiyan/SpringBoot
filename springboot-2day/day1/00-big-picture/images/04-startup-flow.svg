@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 430" font-family="Arial, Helvetica, sans-serif">
+  <defs><marker id="a" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#333"/></marker></defs>
+  <rect width="900" height="430" fill="#ffffff"/>
+  <text x="450" y="30" text-anchor="middle" font-size="20" font-weight="bold" fill="#1a1a1a">What happens when you run java -jar</text>
+  <g font-size="13">
+    <rect x="30" y="55" width="420" height="44" rx="8" fill="#eaf2f8" stroke="#2874a6"/><text x="45" y="82"><tspan font-weight="bold">1.</tspan> JarLauncher starts, finds Start-Class</text>
+    <rect x="30" y="115" width="420" height="44" rx="8" fill="#eaf2f8" stroke="#2874a6"/><text x="45" y="142"><tspan font-weight="bold">2.</tspan> main() calls SpringApplication.run(...)</text>
+    <rect x="30" y="175" width="420" height="44" rx="8" fill="#fdebd0" stroke="#d68910"/><text x="45" y="202"><tspan font-weight="bold">3.</tspan> Load config: application.yml, env, args, profiles</text>
+    <rect x="30" y="235" width="420" height="44" rx="8" fill="#fdebd0" stroke="#d68910"/><text x="45" y="262"><tspan font-weight="bold">4.</tspan> Create ApplicationContext (the container)</text>
+    <rect x="30" y="295" width="420" height="44" rx="8" fill="#d5f5e3" stroke="#1e8449"/><text x="45" y="322"><tspan font-weight="bold">5.</tspan> Scan @Component/@Service/... in your package</text>
+    <rect x="30" y="355" width="420" height="44" rx="8" fill="#d5f5e3" stroke="#1e8449"/><text x="45" y="382"><tspan font-weight="bold">6.</tspan> Apply auto-configuration (conditions decide)</text>
+  </g>
+  <g stroke="#333" stroke-width="2" marker-end="url(#a)">
+    <line x1="240" y1="99" x2="240" y2="113"/><line x1="240" y1="159" x2="240" y2="173"/><line x1="240" y1="219" x2="240" y2="233"/><line x1="240" y1="279" x2="240" y2="293"/><line x1="240" y1="339" x2="240" y2="353"/>
+  </g>
+  <rect x="490" y="55" width="390" height="44" rx="8" fill="#f5eef8" stroke="#7d3c98"/><text x="505" y="82" font-size="13"><tspan font-weight="bold">7.</tspan> Create beans, inject, wrap in proxies</text>
+  <rect x="490" y="115" width="390" height="44" rx="8" fill="#f5eef8" stroke="#7d3c98"/><text x="505" y="142" font-size="13"><tspan font-weight="bold">8.</tspan> Start embedded Tomcat on port 8080</text>
+  <rect x="490" y="175" width="390" height="44" rx="8" fill="#f5eef8" stroke="#7d3c98"/><text x="505" y="202" font-size="13"><tspan font-weight="bold">9.</tspan> Run CommandLineRunner beans</text>
+  <rect x="490" y="235" width="390" height="44" rx="8" fill="#b9e6c7" stroke="#1e8449" stroke-width="2"/><text x="505" y="262" font-size="13" font-weight="bold">10. Ready: "Started TradeServiceApplication"</text>
+  <g stroke="#333" stroke-width="2" marker-end="url(#a)" fill="none">
+    <path d="M450,377 L470,377 L470,77 L488,77"/><line x1="685" y1="99" x2="685" y2="113"/><line x1="685" y1="159" x2="685" y2="173"/><line x1="685" y1="219" x2="685" y2="233"/>
+  </g>
+  <rect x="490" y="300" width="390" height="100" rx="8" fill="#fef9ec" stroke="#d68910" stroke-dasharray="5 4"/>
+  <text x="505" y="324" font-size="12" font-weight="bold">Real log lines from our app:</text>
+  <text x="505" y="344" font-size="11" font-family="Consolas, monospace">Starting TradeServiceApplication ... Java 21</text>
+  <text x="505" y="362" font-size="11" font-family="Consolas, monospace">Tomcat started on port 8080 (http)</text>
+  <text x="505" y="380" font-size="11" font-family="Consolas, monospace">Started TradeServiceApplication in 6.1 seconds</text>
+</svg>

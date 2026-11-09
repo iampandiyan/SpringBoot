@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 400" font-family="Arial, Helvetica, sans-serif">
+  <defs><marker id="a" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#333"/></marker><marker id="r" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#c0392b"/></marker></defs>
+  <rect width="900" height="400" fill="#ffffff"/>
+  <text x="450" y="30" text-anchor="middle" font-size="20" font-weight="bold" fill="#1a1a1a">The self-invocation trap</text>
+  <g font-size="12" text-anchor="middle">
+    <rect x="30" y="80" width="130" height="70" rx="8" fill="#d6eaf8" stroke="#2874a6" stroke-width="2"/><text x="95" y="110" font-weight="bold">Caller</text><text x="95" y="130">calls settleViaSelfCall</text>
+    <rect x="230" y="60" width="200" height="110" rx="10" fill="#f5eef8" stroke="#7d3c98" stroke-width="2"/><text x="330" y="85" font-weight="bold">PROXY (advice runs)</text><text x="330" y="108">TimingAspect logs:</text><text x="330" y="126" font-size="11" font-family="Consolas, monospace">settleViaSelfCall(..) took</text><text x="330" y="148" font-size="11" fill="#1e8449">advice applied</text>
+    <rect x="500" y="40" width="370" height="200" rx="10" fill="#d5f5e3" stroke="#1e8449" stroke-width="2"/><text x="685" y="64" font-weight="bold">REAL TradeService</text>
+    <rect x="520" y="80" width="330" height="50" rx="6" fill="#ffffff" stroke="#1e8449"/><text x="685" y="102" font-family="Consolas, monospace" font-size="11">settleViaSelfCall(id) {</text><text x="685" y="120" font-family="Consolas, monospace" font-size="11">  return this.settle(id);  }</text>
+    <rect x="520" y="165" width="330" height="55" rx="6" fill="#fdf2f2" stroke="#c0392b" stroke-width="2"/><text x="685" y="188" font-family="Consolas, monospace" font-size="11">settle(id) { ... }</text><text x="685" y="208" font-size="11" fill="#c0392b" font-weight="bold">NO advice: no timing, no @Transactional</text>
+  </g>
+  <g stroke="#333" stroke-width="2" marker-end="url(#a)"><line x1="160" y1="115" x2="228" y2="115"/><line x1="430" y1="115" x2="518" y2="105"/></g>
+  <path d="M760,130 C800,145 800,160 765,163" stroke="#c0392b" stroke-width="3" fill="none" marker-end="url(#r)"/>
+  <text x="690" y="152" text-anchor="middle" font-size="11" fill="#c0392b" font-weight="bold">this.settle()</text>
+  <rect x="30" y="265" width="840" height="115" rx="10" fill="#fafafa" stroke="#bbb"/>
+  <text x="50" y="292" font-size="13" font-weight="bold">Proven by our test (SelfInvocationTest): the log has "settleViaSelfCall(..) took" but NOT "settle(..) took".</text>
+  <text x="50" y="316" font-size="12">Real-world impact: an inner method annotated @Transactional(REQUIRES_NEW) silently runs in the outer transaction, or in none.</text>
+  <text x="50" y="338" font-size="12">Fixes: (1) move the inner method to another bean and inject it, (2) restructure so the annotated method is the entry point,</text>
+  <text x="50" y="358" font-size="12">(3) inject the bean into itself (works, but is a smell), (4) AspectJ weaving (heavier build).</text>
+</svg>

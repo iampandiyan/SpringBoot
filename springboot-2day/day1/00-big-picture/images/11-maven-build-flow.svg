@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 520" font-family="Arial, Helvetica, sans-serif">
+  <defs><marker id="a" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#333"/></marker></defs>
+  <rect width="900" height="520" fill="#ffffff"/>
+  <text x="450" y="28" text-anchor="middle" font-size="20" font-weight="bold" fill="#1a1a1a">What happens when you run  .\mvnw.cmd clean verify</text>
+  <!-- part 1: effective pom -->
+  <text x="20" y="58" font-size="14" font-weight="bold">1. Maven builds the "effective POM" (your pom + the whole parent chain)</text>
+  <g font-size="12" text-anchor="middle">
+    <rect x="20" y="70" width="200" height="50" rx="8" fill="#d5f5e3" stroke="#1e8449" stroke-width="2"/><text x="120" y="92" font-weight="bold">your pom.xml</text><text x="120" y="108">about 50 lines</text>
+    <rect x="270" y="70" width="230" height="50" rx="8" fill="#fdebd0" stroke="#d68910" stroke-width="2"/><text x="385" y="92" font-weight="bold">spring-boot-starter-parent</text><text x="385" y="108">plugin settings, encoding, Java</text>
+    <rect x="550" y="70" width="210" height="50" rx="8" fill="#fdebd0" stroke="#d68910" stroke-width="2"/><text x="655" y="92" font-weight="bold">spring-boot-dependencies</text><text x="655" y="108">1,519 managed versions</text>
+    <rect x="790" y="70" width="95" height="50" rx="8" fill="#f2f3f4" stroke="#7f8c8d" stroke-width="2"/><text x="837" y="92" font-weight="bold">Maven</text><text x="837" y="108">defaults</text>
+  </g>
+  <g stroke="#333" stroke-width="2" marker-end="url(#a)"><line x1="270" y1="95" x2="222" y2="95"/><line x1="550" y1="95" x2="502" y2="95"/><line x1="790" y1="95" x2="762" y2="95"/></g>
+  <text x="20" y="144" font-size="12" fill="#444">Result: about 8,500 lines. See it yourself:  .\mvnw.cmd help:effective-pom "-Doutput=effective.xml"</text>
+  <!-- part 2: lifecycle -->
+  <text x="20" y="182" font-size="14" font-weight="bold">2. Phases run in order; each phase is carried out by a plugin goal (real output from our project)</text>
+  <g font-size="11" text-anchor="middle">
+    <rect x="20" y="196" width="100" height="58" rx="6" fill="#f2f3f4" stroke="#7f8c8d"/><text x="70" y="216" font-weight="bold">clean</text><text x="70" y="232">clean:clean</text><text x="70" y="246" fill="#555">deletes target/</text>
+    <rect x="135" y="196" width="105" height="58" rx="6" fill="#eaf2f8" stroke="#2874a6"/><text x="187" y="216" font-weight="bold">resources</text><text x="187" y="232">resources:resources</text><text x="187" y="246" fill="#555">copies config files</text>
+    <rect x="255" y="196" width="105" height="58" rx="6" fill="#eaf2f8" stroke="#2874a6"/><text x="307" y="216" font-weight="bold">compile</text><text x="307" y="232">compiler:compile</text><text x="307" y="246" fill="#555">javac, release 21</text>
+    <rect x="375" y="196" width="105" height="58" rx="6" fill="#eaf2f8" stroke="#2874a6"/><text x="427" y="216" font-weight="bold">test-compile</text><text x="427" y="232">compiler:testCompile</text><text x="427" y="246" fill="#555">compiles tests</text>
+    <rect x="495" y="196" width="95" height="58" rx="6" fill="#d5f5e3" stroke="#1e8449" stroke-width="2"/><text x="542" y="216" font-weight="bold">test</text><text x="542" y="232">surefire:test</text><text x="542" y="246" fill="#555">runs JUnit</text>
+    <rect x="605" y="196" width="130" height="58" rx="6" fill="#eaf2f8" stroke="#2874a6"/><text x="670" y="216" font-weight="bold">package</text><text x="670" y="232">jar:jar</text><text x="670" y="246" fill="#555">plain jar of your classes</text>
+    <rect x="750" y="196" width="135" height="58" rx="6" fill="#fdebd0" stroke="#d68910" stroke-width="2"/><text x="817" y="216" font-weight="bold">package (Boot)</text><text x="817" y="232">spring-boot:repackage</text><text x="817" y="246" fill="#555">makes the 21 MB fat jar</text>
+  </g>
+  <g stroke="#333" stroke-width="2" marker-end="url(#a)"><line x1="120" y1="225" x2="133" y2="225"/><line x1="240" y1="225" x2="253" y2="225"/><line x1="360" y1="225" x2="373" y2="225"/><line x1="480" y1="225" x2="493" y2="225"/><line x1="590" y1="225" x2="603" y2="225"/><line x1="735" y1="225" x2="748" y2="225"/></g>
+  <text x="20" y="276" font-size="12" fill="#444">verify = everything up to and including checks on the package. The wider list: validate, compile, test, package, verify, install, deploy.</text>
+  <!-- part 3: dependency resolution -->
+  <text x="20" y="314" font-size="14" font-weight="bold">3. Before compiling, Maven downloads each dependency (and its dependencies) once</text>
+  <g font-size="12" text-anchor="middle">
+    <rect x="20" y="330" width="190" height="62" rx="8" fill="#d6eaf8" stroke="#2874a6" stroke-width="2"/><text x="115" y="352" font-weight="bold">spring-boot-starter-web</text><text x="115" y="370">you wrote this ONE line</text>
+    <rect x="260" y="330" width="210" height="62" rx="8" fill="#f2f3f4" stroke="#7f8c8d" stroke-width="2"/><text x="365" y="352" font-weight="bold">local repository</text><text x="365" y="370">C:\Users\you\.m2\repository</text>
+    <rect x="520" y="330" width="170" height="62" rx="8" fill="#fdebd0" stroke="#d68910" stroke-width="2"/><text x="605" y="352" font-weight="bold">Maven Central</text><text x="605" y="370">repo.maven.apache.org</text>
+    <rect x="730" y="330" width="155" height="62" rx="8" fill="#d5f5e3" stroke="#1e8449" stroke-width="2"/><text x="807" y="352" font-weight="bold">your classpath</text><text x="807" y="370">63 in the tree, 29 test-only</text>
+  </g>
+  <g stroke="#333" stroke-width="2" marker-end="url(#a)" fill="none"><line x1="210" y1="361" x2="258" y2="361"/><line x1="470" y1="361" x2="518" y2="361"/><line x1="690" y1="361" x2="728" y2="361"/></g>
+  <text x="365" y="412" text-anchor="middle" font-size="11" fill="#444">1. look here first</text><text x="605" y="412" text-anchor="middle" font-size="11" fill="#444">2. if missing, download and keep a copy</text>
+  <text x="20" y="450" font-size="12" fill="#444">One starter line pulls in Tomcat, Spring MVC, Jackson, logging and more (transitive dependencies).</text>
+  <text x="20" y="470" font-size="12" fill="#444">See the tree:  .\mvnw.cmd dependency:tree</text>
+  <text x="20" y="500" font-size="12" fill="#444">Conflicts: if two paths want different versions of one library, the dependencyManagement version (the parent's) wins.</text>
+</svg>

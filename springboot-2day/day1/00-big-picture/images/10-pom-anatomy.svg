@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 560" font-family="Arial, Helvetica, sans-serif">
+  <rect width="900" height="560" fill="#ffffff"/>
+  <text x="450" y="28" text-anchor="middle" font-size="20" font-weight="bold" fill="#1a1a1a">Anatomy of our pom.xml: every block and what it is for</text>
+  <!-- project frame -->
+  <rect x="20" y="44" width="500" height="500" rx="10" fill="#fafafa" stroke="#555" stroke-width="2"/>
+  <text x="32" y="64" font-size="13" font-family="Consolas, monospace" font-weight="bold">&lt;project ...&gt;</text>
+  <g font-size="12" font-family="Consolas, monospace">
+    <rect x="40" y="74" width="460" height="28" rx="5" fill="#eaf2f8" stroke="#2874a6"/><text x="50" y="93">&lt;modelVersion&gt;4.0.0&lt;/modelVersion&gt;</text>
+    <rect x="40" y="110" width="460" height="108" rx="5" fill="#fdebd0" stroke="#d68910"/>
+    <text x="50" y="129" font-weight="bold">&lt;parent&gt;</text>
+    <text x="64" y="147">&lt;groupId&gt;org.springframework.boot</text>
+    <text x="64" y="165">&lt;artifactId&gt;spring-boot-starter-parent</text>
+    <text x="64" y="183">&lt;version&gt;3.5.16&lt;/version&gt;</text>
+    <text x="64" y="201">&lt;relativePath/&gt;</text>
+    <rect x="40" y="226" width="460" height="92" rx="5" fill="#d5f5e3" stroke="#1e8449"/>
+    <text x="50" y="245">&lt;groupId&gt;com.example&lt;/groupId&gt;</text>
+    <text x="50" y="263">&lt;artifactId&gt;trade-service&lt;/artifactId&gt;</text>
+    <text x="50" y="281">&lt;version&gt;0.0.1-SNAPSHOT&lt;/version&gt;</text>
+    <text x="50" y="299">&lt;name&gt;trade-service&lt;/name&gt;</text>
+    <rect x="40" y="326" width="460" height="46" rx="5" fill="#f5eef8" stroke="#7d3c98"/>
+    <text x="50" y="345" font-weight="bold">&lt;properties&gt;</text><text x="64" y="363">&lt;java.version&gt;21&lt;/java.version&gt;</text>
+    <rect x="40" y="380" width="460" height="108" rx="5" fill="#d6eaf8" stroke="#2874a6"/>
+    <text x="50" y="399" font-weight="bold">&lt;dependencies&gt;</text>
+    <text x="64" y="417">&lt;dependency&gt; starter-web &lt;/dependency&gt;</text>
+    <text x="64" y="435">&lt;dependency&gt; starter-test</text>
+    <text x="78" y="453">&lt;scope&gt;test&lt;/scope&gt; &lt;/dependency&gt;</text>
+    <text x="50" y="476">&lt;/dependencies&gt;</text>
+    <rect x="40" y="496" width="460" height="38" rx="5" fill="#f9ebea" stroke="#c0392b"/>
+    <text x="50" y="520">&lt;build&gt;&lt;plugins&gt;&lt;plugin&gt; spring-boot-maven-plugin</text>
+  </g>
+  <!-- annotations -->
+  <g font-size="12" fill="#222">
+    <text x="545" y="94" font-weight="bold" fill="#2874a6">modelVersion</text><text x="545" y="110">Version of the POM file format.</text><text x="545" y="126">Always 4.0.0.</text>
+    <text x="545" y="148" font-weight="bold" fill="#b9770e">parent</text><text x="545" y="164">Inherit settings, versions and</text><text x="545" y="180">plugin config from another POM.</text><text x="545" y="196">Empty relativePath = fetch it from</text><text x="545" y="212">the repository, not from ../pom.xml.</text>
+    <text x="545" y="246" font-weight="bold" fill="#1e8449">groupId : artifactId : version</text><text x="545" y="262">The "coordinates" = the unique</text><text x="545" y="278">address of THIS project.</text><text x="545" y="294">name is only a display label.</text>
+    <text x="545" y="336" font-weight="bold" fill="#7d3c98">properties</text><text x="545" y="352">Named values, reusable as ${...}.</text><text x="545" y="368">java.version drives the compiler.</text>
+    <text x="545" y="400" font-weight="bold" fill="#2874a6">dependencies</text><text x="545" y="416">Libraries your code needs.</text><text x="545" y="432">scope says WHEN they are needed.</text><text x="545" y="448">No version: the parent supplies it.</text>
+    <text x="545" y="506" font-weight="bold" fill="#c0392b">build / plugins</text><text x="545" y="522">Tools that run during the build.</text>
+  </g>
+  <g stroke="#999" stroke-width="1" stroke-dasharray="3 3"><line x1="500" y1="88" x2="540" y2="88"/><line x1="500" y1="164" x2="540" y2="164"/><line x1="500" y1="272" x2="540" y2="272"/><line x1="500" y1="350" x2="540" y2="350"/><line x1="500" y1="434" x2="540" y2="434"/><line x1="500" y1="515" x2="540" y2="515"/></g>
+</svg>

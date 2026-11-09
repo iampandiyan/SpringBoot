@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 360" font-family="Arial, Helvetica, sans-serif">
+  <rect width="900" height="360" fill="#ffffff"/>
+  <text x="450" y="30" text-anchor="middle" font-size="20" font-weight="bold" fill="#1a1a1a">Inside trade-service-0.0.1-SNAPSHOT.jar (the "fat jar", 20.1 MB)</text>
+  <rect x="30" y="55" width="560" height="285" rx="10" fill="#fafafa" stroke="#555" stroke-width="2"/>
+  <g font-size="13">
+    <rect x="50" y="75" width="520" height="50" rx="6" fill="#fdebd0" stroke="#d68910"/><text x="62" y="97" font-family="Consolas, monospace" font-weight="bold">META-INF/MANIFEST.MF</text><text x="62" y="115" font-size="12">Main-Class: ...loader.launch.JarLauncher  |  Start-Class: com.example.trade.TradeServiceApplication</text>
+    <rect x="50" y="135" width="520" height="50" rx="6" fill="#d5f5e3" stroke="#1e8449"/><text x="62" y="157" font-family="Consolas, monospace" font-weight="bold">BOOT-INF/classes/</text><text x="62" y="175" font-size="12">YOUR compiled code (com/example/trade/...) and application.yml</text>
+    <rect x="50" y="195" width="520" height="70" rx="6" fill="#d6eaf8" stroke="#2874a6"/><text x="62" y="217" font-family="Consolas, monospace" font-weight="bold">BOOT-INF/lib/  (30 jars)</text><text x="62" y="236" font-size="12">spring-webmvc-6.2.19.jar, tomcat-embed-core-10.1.55.jar,</text><text x="62" y="252" font-size="12">jackson-databind-2.21.4.jar ... every dependency, nested inside</text>
+    <rect x="50" y="275" width="520" height="50" rx="6" fill="#f5eef8" stroke="#7d3c98"/><text x="62" y="297" font-family="Consolas, monospace" font-weight="bold">org/springframework/boot/loader/</text><text x="62" y="315" font-size="12">The launcher classes that know how to read nested jars</text>
+  </g>
+  <g font-size="13">
+    <text x="620" y="90" font-weight="bold">Why it matters</text>
+    <text x="620" y="115" font-size="12">One file = whole app + Tomcat.</text>
+    <text x="620" y="135" font-size="12">No server install, no WAR deploy.</text>
+    <text x="620" y="165" font-size="12">Run:  java -jar app.jar</text>
+    <text x="620" y="195" font-size="12">Docker image = JRE + this jar.</text>
+    <text x="620" y="215" font-size="12">Kubernetes pod = that image.</text>
+    <text x="620" y="245" font-size="12" fill="#555">Built by spring-boot-maven-plugin</text>
+    <text x="620" y="263" font-size="12" fill="#555">(repackage goal in mvn package).</text>
+  </g>
+</svg>

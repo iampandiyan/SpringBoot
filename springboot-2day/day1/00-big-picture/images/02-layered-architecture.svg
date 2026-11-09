@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 460" font-family="Arial, Helvetica, sans-serif">
+  <defs><marker id="a" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#333"/></marker></defs>
+  <rect width="900" height="460" fill="#ffffff"/>
+  <text x="450" y="30" text-anchor="middle" font-size="20" font-weight="bold" fill="#1a1a1a">Layered architecture of Trade Service</text>
+  <rect x="20" y="180" width="120" height="70" rx="8" fill="#eaf2f8" stroke="#2874a6" stroke-width="2"/><text x="80" y="210" text-anchor="middle" font-size="14" font-weight="bold">Client</text><text x="80" y="230" text-anchor="middle" font-size="12">curl / UI / app</text>
+  <rect x="180" y="60" width="500" height="80" rx="8" fill="#d6eaf8" stroke="#2874a6" stroke-width="2"/><text x="430" y="88" text-anchor="middle" font-size="15" font-weight="bold">Web layer: @RestController</text><text x="430" y="108" text-anchor="middle" font-size="12">TradeController (package web) - HTTP in/out, JSON, status codes</text><text x="430" y="126" text-anchor="middle" font-size="12" fill="#555">NO business rules here</text>
+  <rect x="180" y="165" width="500" height="80" rx="8" fill="#d5f5e3" stroke="#1e8449" stroke-width="2"/><text x="430" y="193" text-anchor="middle" font-size="15" font-weight="bold">Service layer: @Service</text><text x="430" y="213" text-anchor="middle" font-size="12">TradeService (package service) - business rules, transactions</text><text x="430" y="231" text-anchor="middle" font-size="12" fill="#555">create, validate, settle</text>
+  <rect x="180" y="270" width="500" height="80" rx="8" fill="#fdebd0" stroke="#d68910" stroke-width="2"/><text x="430" y="298" text-anchor="middle" font-size="15" font-weight="bold">Repository layer: @Repository</text><text x="430" y="318" text-anchor="middle" font-size="12">TradeRepository (package repo) - talks to storage</text><text x="430" y="336" text-anchor="middle" font-size="12" fill="#555">In-memory today, JPA + H2 in lesson 04, PostgreSQL on Day 2</text>
+  <rect x="720" y="270" width="160" height="80" rx="8" fill="#f5eef8" stroke="#7d3c98" stroke-width="2"/><text x="800" y="305" text-anchor="middle" font-size="14" font-weight="bold">Database</text><text x="800" y="325" text-anchor="middle" font-size="12">H2 / PostgreSQL</text>
+  <rect x="180" y="375" width="500" height="60" rx="8" fill="#f2f3f4" stroke="#7f8c8d" stroke-width="2" stroke-dasharray="6 4"/><text x="430" y="400" text-anchor="middle" font-size="13" font-weight="bold">Domain model (package domain)</text><text x="430" y="420" text-anchor="middle" font-size="12">Trade, TradeStatus - used by every layer</text>
+  <line x1="140" y1="215" x2="178" y2="110" stroke="#333" stroke-width="2" marker-end="url(#a)"/>
+  <line x1="430" y1="140" x2="430" y2="163" stroke="#333" stroke-width="2" marker-end="url(#a)"/>
+  <line x1="430" y1="245" x2="430" y2="268" stroke="#333" stroke-width="2" marker-end="url(#a)"/>
+  <line x1="680" y1="310" x2="718" y2="310" stroke="#333" stroke-width="2" marker-end="url(#a)"/>
+  <text x="705" y="125" font-size="12" fill="#555">Rule: calls only go downward.</text>
+  <text x="705" y="145" font-size="12" fill="#555">Controller never touches the DB.</text>
+  <text x="705" y="200" font-size="12" fill="#555">Cross-cutting (later):</text>
+  <text x="705" y="218" font-size="12" fill="#555">security, @Transactional,</text>
+  <text x="705" y="236" font-size="12" fill="#555">logging, metrics</text>
+</svg>

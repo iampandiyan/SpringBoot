@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 480" font-family="Arial, Helvetica, sans-serif">
+  <defs><marker id="a" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#333"/></marker></defs>
+  <rect width="900" height="480" fill="#ffffff"/>
+  <text x="450" y="28" text-anchor="middle" font-size="20" font-weight="bold" fill="#1a1a1a">What launch.json does when you press F5</text>
+
+  <!-- Row 1: launch -->
+  <text x="20" y="58" font-size="14" font-weight="bold">A. "launch": VS Code starts a NEW JVM for you</text>
+  <g font-size="12" text-anchor="middle">
+    <rect x="20" y="70" width="150" height="64" rx="8" fill="#d5f5e3" stroke="#1e8449" stroke-width="2"/><text x="95" y="94" font-weight="bold">You press F5</text><text x="95" y="112">and pick a name in</text><text x="95" y="126">the Run and Debug list</text>
+    <rect x="215" y="70" width="170" height="64" rx="8" fill="#fdebd0" stroke="#d68910" stroke-width="2"/><text x="300" y="94" font-weight="bold">.vscode/launch.json</text><text x="300" y="112">finds the configuration</text><text x="300" y="126">with that "name"</text>
+    <rect x="430" y="70" width="200" height="64" rx="8" fill="#eaf2f8" stroke="#2874a6" stroke-width="2"/><text x="530" y="94" font-weight="bold">Java language server</text><text x="530" y="112">gives the classpath of</text><text x="530" y="126">project "trade-service"</text>
+    <rect x="675" y="70" width="210" height="64" rx="8" fill="#f5eef8" stroke="#7d3c98" stroke-width="2"/><text x="780" y="94" font-weight="bold">java ... mainClass</text><text x="780" y="112">starts with args, vmArgs, env</text><text x="780" y="126">and a debug connection</text>
+  </g>
+  <g stroke="#333" stroke-width="2" marker-end="url(#a)"><line x1="170" y1="102" x2="213" y2="102"/><line x1="385" y1="102" x2="428" y2="102"/><line x1="630" y1="102" x2="673" y2="102"/></g>
+
+  <!-- Row 2: attach -->
+  <text x="20" y="180" font-size="14" font-weight="bold">B. "attach": the JVM is ALREADY running, VS Code only connects to it</text>
+  <g font-size="12" text-anchor="middle">
+    <rect x="20" y="192" width="270" height="64" rx="8" fill="#d5f5e3" stroke="#1e8449" stroke-width="2"/><text x="155" y="216" font-weight="bold">You start the app yourself</text><text x="155" y="234">mvnw spring-boot:run with the</text><text x="155" y="248">jdwp option, address *:5005</text>
+    <rect x="335" y="192" width="230" height="64" rx="8" fill="#f5eef8" stroke="#7d3c98" stroke-width="2"/><text x="450" y="216" font-weight="bold">JVM listens on port 5005</text><text x="450" y="234">"Listening for transport</text><text x="450" y="248">dt_socket at address: 5005"</text>
+    <rect x="610" y="192" width="275" height="64" rx="8" fill="#fdebd0" stroke="#d68910" stroke-width="2"/><text x="747" y="216" font-weight="bold">launch.json "attach" entry</text><text x="747" y="234">hostName + port must match</text><text x="747" y="248">the JVM's address</text>
+  </g>
+  <g stroke="#333" stroke-width="2" marker-end="url(#a)"><line x1="290" y1="224" x2="333" y2="224"/><line x1="610" y1="224" x2="567" y2="224"/></g>
+
+  <!-- Row 3: what you get -->
+  <text x="20" y="302" font-size="14" font-weight="bold">C. Either way you get the same debugging powers</text>
+  <g font-size="12" text-anchor="middle">
+    <rect x="20" y="314" width="200" height="50" rx="8" fill="#f2f3f4" stroke="#7f8c8d"/><text x="120" y="336" font-weight="bold">Breakpoints</text><text x="120" y="352">red dots stop the code</text>
+    <rect x="245" y="314" width="200" height="50" rx="8" fill="#f2f3f4" stroke="#7f8c8d"/><text x="345" y="336" font-weight="bold">Variables panel</text><text x="345" y="352">see the values live</text>
+    <rect x="470" y="314" width="200" height="50" rx="8" fill="#f2f3f4" stroke="#7f8c8d"/><text x="570" y="336" font-weight="bold">Call stack</text><text x="570" y="352">Tomcat to your code</text>
+    <rect x="695" y="314" width="190" height="50" rx="8" fill="#f2f3f4" stroke="#7f8c8d"/><text x="790" y="336" font-weight="bold">Step / Continue</text><text x="790" y="352">F10, F11, F5</text>
+  </g>
+
+  <!-- Notes -->
+  <rect x="20" y="388" width="865" height="72" rx="8" fill="#fafafa" stroke="#999" stroke-dasharray="4 3"/>
+  <g font-size="12" fill="#333">
+    <text x="34" y="410" font-weight="bold">Remember</text>
+    <text x="34" y="428">launch.json is read ONLY by VS Code. Maven, Spring and your jar never look at it, so it cannot change how the app is built.</text>
+    <text x="34" y="446">Deleting it breaks nothing in the project. You only lose the saved, named run/debug recipes.</text>
+  </g>
+</svg>

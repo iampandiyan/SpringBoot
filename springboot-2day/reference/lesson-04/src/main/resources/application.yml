@@ -1,0 +1,35 @@
+# Base configuration: applies in every profile. Profile files (application-dev.yml, application-prod.yml)
+# are layered on top and win when the same key appears in both.
+spring:
+  application:
+    name: trade-service
+  profiles:
+    default: dev          # used only when no profile is activated explicitly
+  jpa:
+    open-in-view: false           # no Hibernate session during view rendering: lazy-loading mistakes fail early
+    hibernate:
+      ddl-auto: create-drop       # Hibernate builds the tables from the entities. Learning only: real systems use Flyway/Liquibase.
+
+# Our own settings, bound to the TradeProperties record (prefix "trade").
+trade:
+  max-quantity: 1000000
+  venue: XLON
+
+# Custom switch for the conditional bean in lesson 02.
+audit:
+  enabled: false
+
+# Actuator: expose only what is safe by default; the dev profile opens more.
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  info:
+    env:
+      enabled: true       # publish the "info.*" keys below at /actuator/info
+
+info:
+  app:
+    name: trade-service
+    description: Trade capture and settlement demo

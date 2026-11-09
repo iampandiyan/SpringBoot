@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 330" font-family="Arial, Helvetica, sans-serif">
+<defs><marker id="a" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#333"/></marker></defs>
+<rect width="900" height="330" fill="#ffffff"/>
+<text x="450.0" y="30" font-size="20" text-anchor="middle" fill="#1a1a1a" font-weight="bold">Swapping in-memory for JPA: only the bottom changes</text>
+<rect x="20" y="100" width="130" height="80" rx="8" fill="#eaf6ec" stroke="#2e8b57" stroke-width="2"/>
+<text x="85.0" y="135.16666666666666" font-size="11" text-anchor="middle" fill="#1a1a1a" font-weight="bold">TradeController</text>
+<text x="85.0" y="152.16666666666666" font-size="11" text-anchor="middle" fill="#1a1a1a">web</text>
+<rect x="165" y="100" width="130" height="80" rx="8" fill="#eaf6ec" stroke="#2e8b57" stroke-width="2"/>
+<text x="230.0" y="135.16666666666666" font-size="11" text-anchor="middle" fill="#1a1a1a" font-weight="bold">TradeService</text>
+<text x="230.0" y="152.16666666666666" font-size="11" text-anchor="middle" fill="#1a1a1a">business logic</text>
+<line x1="150" y1="140" x2="165" y2="140" stroke="#333" stroke-width="2" marker-end="url(#a)"/>
+<rect x="310" y="100" width="130" height="80" rx="8" fill="#fff8e1" stroke="#c79100" stroke-width="2"/>
+<text x="375.0" y="135.16666666666666" font-size="11" text-anchor="middle" fill="#1a1a1a" font-weight="bold">TradeRepository</text>
+<text x="375.0" y="152.16666666666666" font-size="11" text-anchor="middle" fill="#1a1a1a">interface (port)</text>
+<line x1="295" y1="140" x2="310" y2="140" stroke="#333" stroke-width="2" marker-end="url(#a)"/>
+<rect x="455" y="100" width="130" height="80" rx="8" fill="#e8f1fb" stroke="#2f6fb5" stroke-width="2"/>
+<text x="520.0" y="135.16666666666666" font-size="11" text-anchor="middle" fill="#1a1a1a" font-weight="bold">JpaTradeRepository</text>
+<text x="520.0" y="152.16666666666666" font-size="11" text-anchor="middle" fill="#1a1a1a">adapter: entity &lt;-&gt; record</text>
+<line x1="440" y1="140" x2="455" y2="140" stroke="#333" stroke-width="2" marker-end="url(#a)"/>
+<rect x="600" y="100" width="130" height="80" rx="8" fill="#e8f1fb" stroke="#2f6fb5" stroke-width="2"/>
+<text x="665.0" y="135.16666666666666" font-size="11" text-anchor="middle" fill="#1a1a1a" font-weight="bold">TradeJpaRepository</text>
+<text x="665.0" y="152.16666666666666" font-size="11" text-anchor="middle" fill="#1a1a1a">Spring Data writes it</text>
+<line x1="585" y1="140" x2="600" y2="140" stroke="#333" stroke-width="2" marker-end="url(#a)"/>
+<rect x="745" y="100" width="130" height="80" rx="8" fill="#f3f4f6" stroke="#6b7280" stroke-width="2"/>
+<text x="810.0" y="135.16666666666666" font-size="11" text-anchor="middle" fill="#1a1a1a" font-weight="bold">Hibernate + H2</text>
+<text x="810.0" y="152.16666666666666" font-size="11" text-anchor="middle" fill="#1a1a1a">SQL, connection pool</text>
+<line x1="730" y1="140" x2="745" y2="140" stroke="#333" stroke-width="2" marker-end="url(#a)"/>
+<rect x="20" y="230" width="410" height="56" rx="8" fill="#f3f4f6" stroke="#6b7280" stroke-width="2"/>
+<text x="225.0" y="262.3333333333333" font-size="13" text-anchor="middle" fill="#1a1a1a">unchanged since lesson 03</text>
+<rect x="450" y="230" width="430" height="56" rx="8" fill="#e8f1fb" stroke="#2f6fb5" stroke-width="2"/>
+<text x="665.0" y="262.3333333333333" font-size="13" text-anchor="middle" fill="#1a1a1a">new in lesson 04  (InMemoryTradeRepository stays for unit tests)</text>
+</svg>

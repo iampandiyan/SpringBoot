@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 940 400" font-family="Arial, Helvetica, sans-serif">
+<defs><marker id="a" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#333"/></marker></defs>
+<rect width="940" height="400" fill="#ffffff"/>
+<text x="470.0" y="30" font-size="20" text-anchor="middle" fill="#1a1a1a" font-weight="bold">Anatomy of the JWT our /auth/token endpoint returns</text>
+<rect x="20" y="60" width="270" height="120" rx="8" fill="#fdf2f2" stroke="#c0392b" stroke-width="2"/>
+<text x="155.0" y="114.66666666666667" font-size="14" text-anchor="middle" fill="#1a1a1a" font-weight="bold">1. Header</text>
+<text x="155.0" y="134.66666666666669" font-size="14" text-anchor="middle" fill="#1a1a1a" font-family="Consolas, Menlo, monospace">{ &quot;alg&quot;: &quot;HS256&quot; }</text>
+<rect x="335" y="60" width="330" height="120" rx="8" fill="#e8f1fb" stroke="#2f6fb5" stroke-width="2"/>
+<text x="500.0" y="86.33333333333333" font-size="13" text-anchor="middle" fill="#1a1a1a" font-weight="bold">2. Payload (claims)</text>
+<text x="500.0" y="105.33333333333333" font-size="13" text-anchor="middle" fill="#1a1a1a" font-family="Consolas, Menlo, monospace">&quot;iss&quot;: &quot;trade-service&quot;</text>
+<text x="500.0" y="124.33333333333333" font-size="13" text-anchor="middle" fill="#1a1a1a" font-family="Consolas, Menlo, monospace">&quot;sub&quot;: &quot;alice&quot;</text>
+<text x="500.0" y="143.33333333333331" font-size="13" text-anchor="middle" fill="#1a1a1a" font-family="Consolas, Menlo, monospace">&quot;roles&quot;: [&quot;TRADER&quot;]</text>
+<text x="500.0" y="162.33333333333331" font-size="13" text-anchor="middle" fill="#1a1a1a" font-family="Consolas, Menlo, monospace">&quot;iat&quot; / &quot;exp&quot;: seconds since 1970</text>
+<rect x="710" y="60" width="210" height="120" rx="8" fill="#f3edfb" stroke="#7e57c2" stroke-width="2"/>
+<text x="815.0" y="95.83333333333333" font-size="13" text-anchor="middle" fill="#1a1a1a" font-weight="bold">3. Signature</text>
+<text x="815.0" y="114.83333333333333" font-size="13" text-anchor="middle" fill="#1a1a1a">HMAC-SHA256(</text>
+<text x="815.0" y="133.83333333333331" font-size="13" text-anchor="middle" fill="#1a1a1a">header + payload,</text>
+<text x="815.0" y="152.83333333333331" font-size="13" text-anchor="middle" fill="#1a1a1a">secret)</text>
+<text x="305" y="125" font-size="28" text-anchor="start" fill="#1a1a1a" font-weight="bold">.</text>
+<text x="680" y="125" font-size="28" text-anchor="start" fill="#1a1a1a" font-weight="bold">.</text>
+<text x="20" y="215" font-size="14" text-anchor="start" fill="#1a1a1a">Sent as   Authorization: Bearer &lt;header&gt;.&lt;payload&gt;.&lt;signature&gt;   (each part base64url-encoded)</text>
+<rect x="20" y="250" width="430" height="120" rx="8" fill="#eaf6ec" stroke="#2e8b57" stroke-width="2"/>
+<text x="235.0" y="285.8333333333333" font-size="13" text-anchor="middle" fill="#1a1a1a" font-weight="bold">What the API does with it</text>
+<text x="235.0" y="304.8333333333333" font-size="13" text-anchor="middle" fill="#1a1a1a">recompute the HMAC with our secret</text>
+<text x="235.0" y="323.8333333333333" font-size="13" text-anchor="middle" fill="#1a1a1a">same result?  then nobody changed it</text>
+<text x="235.0" y="342.8333333333333" font-size="13" text-anchor="middle" fill="#1a1a1a">check exp, then map roles to authorities</text>
+<rect x="480" y="250" width="440" height="120" rx="8" fill="#fff8e1" stroke="#c79100" stroke-width="2"/>
+<text x="700.0" y="285.8333333333333" font-size="13" text-anchor="middle" fill="#1a1a1a" font-weight="bold">What it does not do</text>
+<text x="700.0" y="304.8333333333333" font-size="13" text-anchor="middle" fill="#1a1a1a">The payload is ENCODED, not encrypted: anyone can read it.</text>
+<text x="700.0" y="323.8333333333333" font-size="13" text-anchor="middle" fill="#1a1a1a">Never put secrets in claims.</text>
+<text x="700.0" y="342.8333333333333" font-size="13" text-anchor="middle" fill="#1a1a1a">Keep tokens short-lived; HTTPS always.</text>
+</svg>

@@ -81,13 +81,14 @@ springboot-2day/
   day1/
     00-big-picture/   README.md  +  images/*.svg      <- lesson text and diagrams
     01-spring-core/   README.md  +  images/*.svg
-    02..06            (coming)
+    02-boot-internals/  03-rest-validation/  04-data-jpa/  05-security-jwt/  06-testing/
+                      (each: README.md + images/*.svg)
   day2/07..12         (coming)
   99-cheatsheet-and-interview-qa.md   (coming)
   reference/
     lesson-00/        working project at the END of lesson 00
     lesson-01/        working project at the END of lesson 01 (= lesson 00 + that lesson's changes)
-    ...
+    lesson-02 ... lesson-06   the same, one per lesson (lesson-06 = the finished Day 1 project, 79 tests)
   tools/mdviewer.html     browser Markdown viewer (see below), mdviewer.png = its screenshot
   tools/check_lesson.py   my checker (not needed for studying)
 ```

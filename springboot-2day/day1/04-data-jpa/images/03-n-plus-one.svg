@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 400" font-family="Arial, Helvetica, sans-serif">
+<defs><marker id="a" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#333"/></marker></defs>
+<rect width="900" height="400" fill="#ffffff"/>
+<text x="450.0" y="30" font-size="20" text-anchor="middle" fill="#1a1a1a" font-weight="bold">The N+1 query problem (5 trades, 2 allocations each)</text>
+<rect x="30" y="55" width="400" height="40" rx="8" fill="#fdf2f2" stroke="#c0392b" stroke-width="2"/>
+<text x="230.0" y="69.66666666666667" font-size="14" text-anchor="middle" fill="#1a1a1a" font-weight="bold">Naive: 6 SQL statements</text>
+<text x="230.0" y="89.66666666666667" font-size="14" text-anchor="middle" fill="#1a1a1a">findAll() then getAllocations() in a loop</text>
+<text x="40" y="125" font-size="13" text-anchor="start" fill="#1a1a1a" font-family="Consolas, Menlo, monospace">select * from trade                                   (1)</text>
+<text x="40" y="150" font-size="13" text-anchor="start" fill="#1a1a1a" font-family="Consolas, Menlo, monospace">select * from allocation where trade_id = 1     (2)</text>
+<text x="40" y="172" font-size="13" text-anchor="start" fill="#1a1a1a" font-family="Consolas, Menlo, monospace">select * from allocation where trade_id = 2     (3)</text>
+<text x="40" y="194" font-size="13" text-anchor="start" fill="#1a1a1a" font-family="Consolas, Menlo, monospace">select * from allocation where trade_id = 3     (4)</text>
+<text x="40" y="216" font-size="13" text-anchor="start" fill="#1a1a1a" font-family="Consolas, Menlo, monospace">select * from allocation where trade_id = 4     (5)</text>
+<text x="40" y="238" font-size="13" text-anchor="start" fill="#1a1a1a" font-family="Consolas, Menlo, monospace">select * from allocation where trade_id = 5     (6)</text>
+<rect x="470" y="55" width="400" height="40" rx="8" fill="#eaf6ec" stroke="#2e8b57" stroke-width="2"/>
+<text x="670.0" y="69.66666666666667" font-size="14" text-anchor="middle" fill="#1a1a1a" font-weight="bold">Fetch join: 1 SQL statement</text>
+<text x="670.0" y="89.66666666666667" font-size="14" text-anchor="middle" fill="#1a1a1a">one join, everything loaded together</text>
+<text x="480" y="125" font-size="13" text-anchor="start" fill="#1a1a1a" font-family="Consolas, Menlo, monospace">select t.*, a.*</text>
+<text x="480" y="147" font-size="13" text-anchor="start" fill="#1a1a1a" font-family="Consolas, Menlo, monospace">  from trade t</text>
+<text x="480" y="169" font-size="13" text-anchor="start" fill="#1a1a1a" font-family="Consolas, Menlo, monospace">  left join allocation a on a.trade_id = t.id</text>
+<text x="30" y="300" font-size="14" text-anchor="start" fill="#1a1a1a">With 10,000 trades the naive version sends 10,001 statements: one network round trip each.</text>
+<text x="30" y="325" font-size="14" text-anchor="start" fill="#1a1a1a">It is invisible in a unit test with 3 rows and obvious in production. We count statements in NPlusOneTest.</text>
+<text x="30" y="360" font-size="14" text-anchor="start" fill="#1a1a1a">Fixes: JOIN FETCH, @EntityGraph, batch fetching (@BatchSize), or a DTO projection query.</text>
+</svg>

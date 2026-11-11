@@ -1,0 +1,5 @@
+# Profile "kafka": send outbox events through Kafka instead of calling the handlers inside this JVM.
+# Start with:  --spring.profiles.active=dev,kafka   (dev keeps the developer settings; kafka adds this file on top)
+trade:
+  events:
+    transport: kafka

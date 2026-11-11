@@ -1,0 +1,26 @@
+spring:
+  application:
+    name: trade-service
+  profiles:
+    default: dev
+
+trade:
+  max-quantity: 100000000
+  venue: XLON
+
+audit:
+  enabled: false
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  info:
+    env:
+      enabled: true
+
+info:
+  app:
+    name: trade-service
+    description: Trade capture and settlement demo

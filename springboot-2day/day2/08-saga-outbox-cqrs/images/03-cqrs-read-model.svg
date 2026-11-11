@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 400" font-family="Arial, Helvetica, sans-serif">
+<defs><marker id="a" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#333"/></marker></defs>
+<rect width="900" height="400" fill="#ffffff"/>
+<text x="450.0" y="30" font-size="20" text-anchor="middle" fill="#1a1a1a" font-weight="bold">CQRS: separate models for writing and for reading</text>
+<rect x="30" y="150" width="140" height="70" rx="8" fill="#e8f1fb" stroke="#2f6fb5" stroke-width="2"/>
+<text x="100.0" y="179.66666666666666" font-size="14" text-anchor="middle" fill="#1a1a1a" font-weight="bold">Command</text>
+<text x="100.0" y="199.66666666666666" font-size="14" text-anchor="middle" fill="#1a1a1a">POST /settlement</text>
+<rect x="220" y="150" width="190" height="70" rx="8" fill="#eaf6ec" stroke="#2e8b57" stroke-width="2"/>
+<text x="315.0" y="169.66666666666666" font-size="14" text-anchor="middle" fill="#1a1a1a" font-weight="bold">Write model</text>
+<text x="315.0" y="189.66666666666666" font-size="14" text-anchor="middle" fill="#1a1a1a">trade, allocation,</text>
+<text x="315.0" y="209.66666666666666" font-size="14" text-anchor="middle" fill="#1a1a1a">saga, outbox tables</text>
+<rect x="460" y="150" width="150" height="70" rx="8" fill="#f3edfb" stroke="#7e57c2" stroke-width="2"/>
+<text x="535.0" y="179.66666666666666" font-size="14" text-anchor="middle" fill="#1a1a1a" font-weight="bold">Events</text>
+<text x="535.0" y="199.66666666666666" font-size="14" text-anchor="middle" fill="#1a1a1a">relay + events</text>
+<rect x="660" y="150" width="200" height="70" rx="8" fill="#fff8e1" stroke="#c79100" stroke-width="2"/>
+<text x="760.0" y="169.66666666666666" font-size="14" text-anchor="middle" fill="#1a1a1a" font-weight="bold">Read model</text>
+<text x="760.0" y="189.66666666666666" font-size="14" text-anchor="middle" fill="#1a1a1a">settled_trade_report</text>
+<text x="760.0" y="209.66666666666666" font-size="14" text-anchor="middle" fill="#1a1a1a">(shaped for the question)</text>
+<rect x="660" y="290" width="200" height="60" rx="8" fill="#e8f1fb" stroke="#2f6fb5" stroke-width="2"/>
+<text x="760.0" y="314.6666666666667" font-size="14" text-anchor="middle" fill="#1a1a1a" font-weight="bold">Query</text>
+<text x="760.0" y="334.6666666666667" font-size="14" text-anchor="middle" fill="#1a1a1a">GET /reports/settled</text>
+<line x1="170" y1="185" x2="220" y2="185" stroke="#333" stroke-width="2" marker-end="url(#a)"/>
+<line x1="410" y1="185" x2="460" y2="185" stroke="#333" stroke-width="2" marker-end="url(#a)"/>
+<line x1="610" y1="185" x2="660" y2="185" stroke="#333" stroke-width="2" marker-end="url(#a)"/>
+<text x="635.0" y="179.0" font-size="12" text-anchor="middle" fill="#444">projector</text>
+<line x1="760" y1="290" x2="760" y2="220" stroke="#333" stroke-width="2" marker-end="url(#a)"/>
+<text x="760.0" y="249.0" font-size="12" text-anchor="middle" fill="#444">reads only</text>
+<text x="30" y="260" font-size="13" text-anchor="start" fill="#1a1a1a">Write side: rules and consistency.</text>
+<text x="30" y="282" font-size="13" text-anchor="start" fill="#1a1a1a">Read side: speed and shape; may lag by a moment</text>
+<text x="30" y="304" font-size="13" text-anchor="start" fill="#1a1a1a">(eventually consistent), and can be rebuilt by</text>
+<text x="30" y="326" font-size="13" text-anchor="start" fill="#1a1a1a">replaying the events.</text>
+</svg>

@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 440" font-family="Arial, Helvetica, sans-serif">
+<defs><marker id="a" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#333"/></marker></defs>
+<rect width="900" height="440" fill="#ffffff"/>
+<text x="450.0" y="30" font-size="20" text-anchor="middle" fill="#1a1a1a" font-weight="bold">Our flow: outbox to Kafka to idempotent consumer (and the dead-letter topic)</text>
+<rect x="20" y="90" width="130" height="70" rx="8" fill="#eaf6ec" stroke="#2e8b57" stroke-width="2"/>
+<text x="85.0" y="109.66666666666667" font-size="14" text-anchor="middle" fill="#1a1a1a" font-weight="bold">TradeService</text>
+<text x="85.0" y="129.66666666666669" font-size="14" text-anchor="middle" fill="#1a1a1a">status + event</text>
+<text x="85.0" y="149.66666666666669" font-size="14" text-anchor="middle" fill="#1a1a1a">one transaction</text>
+<rect x="180" y="90" width="120" height="70" rx="8" fill="#e8f1fb" stroke="#2f6fb5" stroke-width="2"/>
+<text x="240.0" y="119.66666666666667" font-size="14" text-anchor="middle" fill="#1a1a1a" font-weight="bold">table</text>
+<text x="240.0" y="139.66666666666669" font-size="14" text-anchor="middle" fill="#1a1a1a">outbox_event</text>
+<rect x="330" y="90" width="120" height="70" rx="8" fill="#f3edfb" stroke="#7e57c2" stroke-width="2"/>
+<text x="390.0" y="109.66666666666667" font-size="14" text-anchor="middle" fill="#1a1a1a" font-weight="bold">OutboxRelay</text>
+<text x="390.0" y="129.66666666666669" font-size="14" text-anchor="middle" fill="#1a1a1a">acks=all, key</text>
+<text x="390.0" y="149.66666666666669" font-size="14" text-anchor="middle" fill="#1a1a1a">= trade id</text>
+<rect x="480" y="90" width="140" height="70" rx="8" fill="#fff8e1" stroke="#c79100" stroke-width="2"/>
+<text x="550.0" y="119.66666666666667" font-size="14" text-anchor="middle" fill="#1a1a1a" font-weight="bold">Kafka topic</text>
+<text x="550.0" y="139.66666666666669" font-size="14" text-anchor="middle" fill="#1a1a1a">trade-events</text>
+<rect x="650" y="90" width="230" height="70" rx="8" fill="#e8f1fb" stroke="#2f6fb5" stroke-width="2"/>
+<text x="765.0" y="109.66666666666667" font-size="14" text-anchor="middle" fill="#1a1a1a" font-weight="bold">@KafkaListener</text>
+<text x="765.0" y="129.66666666666669" font-size="14" text-anchor="middle" fill="#1a1a1a">listener, then</text>
+<text x="765.0" y="149.66666666666669" font-size="14" text-anchor="middle" fill="#1a1a1a">IdempotentEventProcessor</text>
+<line x1="150" y1="125" x2="180" y2="125" stroke="#333" stroke-width="2" marker-end="url(#a)"/>
+<line x1="300" y1="125" x2="330" y2="125" stroke="#333" stroke-width="2" marker-end="url(#a)"/>
+<line x1="450" y1="125" x2="480" y2="125" stroke="#333" stroke-width="2" marker-end="url(#a)"/>
+<line x1="620" y1="125" x2="650" y2="125" stroke="#333" stroke-width="2" marker-end="url(#a)"/>
+<rect x="650" y="210" width="230" height="80" rx="8" fill="#eaf6ec" stroke="#2e8b57" stroke-width="2"/>
+<text x="765.0" y="234.66666666666666" font-size="14" text-anchor="middle" fill="#1a1a1a" font-weight="bold">dedupe</text>
+<text x="765.0" y="254.66666666666666" font-size="14" text-anchor="middle" fill="#1a1a1a">already in processed_event? skip</text>
+<text x="765.0" y="274.66666666666663" font-size="14" text-anchor="middle" fill="#1a1a1a">else handlers + insert row (1 tx)</text>
+<line x1="765" y1="160" x2="765" y2="210" stroke="#333" stroke-width="2" marker-end="url(#a)"/>
+<rect x="650" y="330" width="230" height="70" rx="8" fill="#fff8e1" stroke="#c79100" stroke-width="2"/>
+<text x="765.0" y="359.6666666666667" font-size="14" text-anchor="middle" fill="#1a1a1a" font-weight="bold">read model</text>
+<text x="765.0" y="379.6666666666667" font-size="14" text-anchor="middle" fill="#1a1a1a">settled_trade_report</text>
+<line x1="765" y1="290" x2="765" y2="330" stroke="#333" stroke-width="2" marker-end="url(#a)"/>
+<rect x="330" y="330" width="270" height="70" rx="8" fill="#fdf2f2" stroke="#c0392b" stroke-width="2"/>
+<text x="465.0" y="349.6666666666667" font-size="14" text-anchor="middle" fill="#1a1a1a" font-weight="bold">trade-events.DLT</text>
+<text x="465.0" y="369.6666666666667" font-size="14" text-anchor="middle" fill="#1a1a1a">after 3 retries: parked here,</text>
+<text x="465.0" y="389.6666666666667" font-size="14" text-anchor="middle" fill="#1a1a1a">same partition number</text>
+<line x1="650" y1="150" x2="600" y2="330" stroke="#333" stroke-width="2" stroke-dasharray="6 4" marker-end="url(#a)"/>
+<text x="560" y="250" font-size="12" text-anchor="middle" fill="#444">handler keeps failing</text>
+<text x="20" y="215" font-size="13" text-anchor="start" fill="#1a1a1a">Publish succeeded only when the broker acknowledged:</text>
+<text x="20" y="237" font-size="13" text-anchor="start" fill="#1a1a1a">then the relay marks the outbox row published.</text>
+<text x="20" y="270" font-size="13" text-anchor="start" fill="#1a1a1a">A crash in between means the row is sent again:</text>
+<text x="20" y="292" font-size="13" text-anchor="start" fill="#1a1a1a" font-weight="bold">duplicates are expected, so the consumer is idempotent.</text>
+</svg>

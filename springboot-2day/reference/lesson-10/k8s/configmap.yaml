@@ -1,0 +1,14 @@
+# Non-secret settings. Each key becomes an environment variable in the pod (see envFrom in deployment.yaml).
+# Spring Boot's relaxed binding turns SPRING_PROFILES_ACTIVE into spring.profiles.active, and so on (lesson 02).
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: trade-service-config
+  namespace: trade
+data:
+  SPRING_PROFILES_ACTIVE: "prod,kafka"
+  # Managed services live OUTSIDE the cluster in this design; these are their addresses.
+  SPRING_DATASOURCE_URL: "jdbc:postgresql://trade-db.internal.example:5432/trades"
+  SPRING_DATASOURCE_USERNAME: "trade"
+  KAFKA_BOOTSTRAP_SERVERS: "kafka-1.internal.example:9092,kafka-2.internal.example:9092"
+  LOGGING_STRUCTURED_FORMAT_CONSOLE: "ecs"

@@ -1,0 +1,32 @@
+# HorizontalPodAutoscaler: add or remove pods based on measured CPU. Needs the metrics-server add-on in the cluster.
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: trade-service
+  namespace: trade
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: trade-service
+  minReplicas: 2
+  maxReplicas: 6
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70      # relative to the CPU REQUEST (250m), so the target is about 175m per pod
+---
+# PodDisruptionBudget: during VOLUNTARY disruptions (node drain, cluster upgrade) keep at least one pod running.
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: trade-service
+  namespace: trade
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: trade-service

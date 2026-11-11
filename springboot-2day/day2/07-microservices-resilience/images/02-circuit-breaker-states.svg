@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 420" font-family="Arial, Helvetica, sans-serif">
+<defs><marker id="a" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#333"/></marker></defs>
+<rect width="900" height="420" fill="#ffffff"/>
+<text x="450.0" y="30" font-size="20" text-anchor="middle" fill="#1a1a1a" font-weight="bold">Circuit breaker states</text>
+<rect x="60" y="150" width="220" height="110" rx="8" fill="#eaf6ec" stroke="#2e8b57" stroke-width="2"/>
+<text x="170.0" y="189.66666666666666" font-size="14" text-anchor="middle" fill="#1a1a1a" font-weight="bold">CLOSED</text>
+<text x="170.0" y="209.66666666666666" font-size="14" text-anchor="middle" fill="#1a1a1a">calls pass through</text>
+<text x="170.0" y="229.66666666666666" font-size="14" text-anchor="middle" fill="#1a1a1a">failures are counted</text>
+<rect x="620" y="150" width="220" height="110" rx="8" fill="#fdf2f2" stroke="#c0392b" stroke-width="2"/>
+<text x="730.0" y="189.66666666666666" font-size="14" text-anchor="middle" fill="#1a1a1a" font-weight="bold">OPEN</text>
+<text x="730.0" y="209.66666666666666" font-size="14" text-anchor="middle" fill="#1a1a1a">calls refused at once</text>
+<text x="730.0" y="229.66666666666666" font-size="14" text-anchor="middle" fill="#1a1a1a">(CallNotPermittedException)</text>
+<rect x="340" y="310" width="220" height="90" rx="8" fill="#fff8e1" stroke="#c79100" stroke-width="2"/>
+<text x="450.0" y="339.6666666666667" font-size="14" text-anchor="middle" fill="#1a1a1a" font-weight="bold">HALF_OPEN</text>
+<text x="450.0" y="359.6666666666667" font-size="14" text-anchor="middle" fill="#1a1a1a">a few probe calls</text>
+<text x="450.0" y="379.6666666666667" font-size="14" text-anchor="middle" fill="#1a1a1a">are let through</text>
+<line x1="280" y1="190" x2="620" y2="190" stroke="#333" stroke-width="2" marker-end="url(#a)"/>
+<text x="450" y="178" font-size="12" text-anchor="middle" fill="#444">failure rate or slow-call rate over the threshold</text>
+<line x1="780" y1="260" x2="560" y2="335" stroke="#333" stroke-width="2" marker-end="url(#a)"/>
+<text x="740" y="322" font-size="12" text-anchor="middle" fill="#444">wait-duration-in-open-state is over</text>
+<line x1="340" y1="350" x2="190" y2="260" stroke="#333" stroke-width="2" marker-end="url(#a)"/>
+<text x="190" y="330" font-size="12" text-anchor="middle" fill="#444">probes succeed</text>
+<line x1="470" y1="310" x2="650" y2="262" stroke="#333" stroke-width="2" stroke-dasharray="6 4" marker-end="url(#a)"/>
+<text x="500" y="282" font-size="12" text-anchor="middle" fill="#444">a probe fails</text>
+<text x="450" y="100" font-size="13" text-anchor="middle" fill="#1a1a1a">COUNT_BASED window: the last N calls. Needs minimum-number-of-calls before it may open.</text>
+</svg>

@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 360" font-family="Arial, Helvetica, sans-serif">
+<defs><marker id="a" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#333"/></marker></defs>
+<rect width="900" height="360" fill="#ffffff"/>
+<text x="450.0" y="30" font-size="20" text-anchor="middle" fill="#1a1a1a" font-weight="bold">Replacing a pod without dropping requests (time runs left to right)</text>
+<rect x="30" y="70" width="190" height="70" rx="8" fill="#eaf6ec" stroke="#2e8b57" stroke-width="2"/>
+<text x="125.0" y="99.83333333333333" font-size="13" text-anchor="middle" fill="#1a1a1a">new pod starts</text>
+<text x="125.0" y="118.83333333333333" font-size="13" text-anchor="middle" fill="#1a1a1a">startupProbe passes</text>
+<rect x="250" y="70" width="190" height="70" rx="8" fill="#eaf6ec" stroke="#2e8b57" stroke-width="2"/>
+<text x="345.0" y="99.83333333333333" font-size="13" text-anchor="middle" fill="#1a1a1a">readinessProbe UP</text>
+<text x="345.0" y="118.83333333333333" font-size="13" text-anchor="middle" fill="#1a1a1a">Service adds it</text>
+<line x1="220" y1="105" x2="250" y2="105" stroke="#333" stroke-width="2" marker-end="url(#a)"/>
+<rect x="30" y="190" width="160" height="70" rx="8" fill="#fff8e1" stroke="#c79100" stroke-width="2"/>
+<text x="110.0" y="219.83333333333334" font-size="13" text-anchor="middle" fill="#1a1a1a">old pod marked</text>
+<text x="110.0" y="238.83333333333334" font-size="13" text-anchor="middle" fill="#1a1a1a">Terminating</text>
+<rect x="215" y="190" width="160" height="70" rx="8" fill="#fff8e1" stroke="#c79100" stroke-width="2"/>
+<text x="295.0" y="219.83333333333334" font-size="13" text-anchor="middle" fill="#1a1a1a">preStop: sleep 5</text>
+<text x="295.0" y="238.83333333333334" font-size="13" text-anchor="middle" fill="#1a1a1a">Service stops routing</text>
+<rect x="400" y="190" width="160" height="70" rx="8" fill="#fdf2f2" stroke="#c0392b" stroke-width="2"/>
+<text x="480.0" y="219.83333333333334" font-size="13" text-anchor="middle" fill="#1a1a1a">SIGTERM to java</text>
+<text x="480.0" y="238.83333333333334" font-size="13" text-anchor="middle" fill="#1a1a1a">graceful shutdown</text>
+<rect x="585" y="190" width="160" height="70" rx="8" fill="#fdf2f2" stroke="#c0392b" stroke-width="2"/>
+<text x="665.0" y="219.83333333333334" font-size="13" text-anchor="middle" fill="#1a1a1a">in-flight requests</text>
+<text x="665.0" y="238.83333333333334" font-size="13" text-anchor="middle" fill="#1a1a1a">finish (max 20 s)</text>
+<rect x="770" y="190" width="110" height="70" rx="8" fill="#f3f4f6" stroke="#6b7280" stroke-width="2"/>
+<text x="825.0" y="219.83333333333334" font-size="13" text-anchor="middle" fill="#1a1a1a">exit 143</text>
+<text x="825.0" y="238.83333333333334" font-size="13" text-anchor="middle" fill="#1a1a1a">pod gone</text>
+<line x1="190" y1="225" x2="215" y2="225" stroke="#333" stroke-width="2" marker-end="url(#a)"/>
+<line x1="375" y1="225" x2="400" y2="225" stroke="#333" stroke-width="2" marker-end="url(#a)"/>
+<line x1="560" y1="225" x2="585" y2="225" stroke="#333" stroke-width="2" marker-end="url(#a)"/>
+<line x1="745" y1="225" x2="770" y2="225" stroke="#333" stroke-width="2" marker-end="url(#a)"/>
+<text x="30" y="300" font-size="13" text-anchor="start" fill="#1a1a1a">SIGKILL comes at terminationGracePeriodSeconds = 30 s: 5 s preStop + 20 s Spring limit leaves 5 s spare.</text>
+<text x="30" y="325" font-size="13" text-anchor="start" fill="#1a1a1a">maxUnavailable: 0 means the old pod is only removed after the new one is ready, so capacity never dips.</text>
+</svg>

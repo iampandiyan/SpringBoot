@@ -265,6 +265,124 @@ logging:
 - We did **not** set a datasource URL: Boot creates an embedded H2 database with a generated name. Real databases: `spring.datasource.url`, `username`, `password` (from the environment!).
 - `org.hibernate.SQL: DEBUG` in `dev` prints every statement. It is the cheapest and best habit for finding N+1 and unexpected queries.
 
+### Deep dive: JPA, Hibernate, Spring Data, HikariCP and H2, the persistence stack
+
+Step 1 added one starter and Boot configured five things behind it. Here is the complete picture: what each piece is, why it exists, and the configuration keys (the ones we set and the ones we did not).
+
+#### A. Who is who?
+
+[![Layers with JPA](images/01-layers-with-jpa.png)](images/01-layers-with-jpa.svg)
+
+| Piece | What it is | Why it exists | You know it as |
+|---|---|---|---|
+| **JDBC** | The low-level Java API to talk to a database (connections, statements, result sets). | The base everything else stands on. | What you used in plain batch jobs |
+| **JPA** (Jakarta Persistence) | A **specification**: annotations (`@Entity`, `@Id`) and an `EntityManager` API for mapping objects to tables. It is only an interface standard. | Write against a standard, not a vendor. | The JPA part of EJB 3 |
+| **Hibernate** | The most used **implementation** of JPA (an ORM: object-relational mapper). It generates the SQL, tracks changes and caches loaded objects. | Removes hand-written insert/update SQL and result-set mapping. | Your Hibernate experience, unchanged |
+| **Spring Data JPA** | A Spring layer **on top of JPA**. You declare a repository *interface*; at startup Spring generates the implementation. | Removes the DAO boilerplate (`find`, `save`, paging, simple queries). | Generated DAOs |
+| **HikariCP** | A fast **connection pool**. | Opening a database connection costs milliseconds to seconds; a pool keeps a few open and lends them out. | A WebLogic/JBoss datasource pool |
+| **H2** | A database written in Java that runs **inside** your JVM, in memory or in a file. | Learning and fast tests with nothing to install. | Not Oracle: see section 3 |
+| `spring-boot-starter-data-jpa` | The dependency that brings Spring Data JPA, Hibernate, HikariCP, `spring-tx` (transactions) and `spring-jdbc`. | One line instead of ten matching versions. | |
+
+**What Boot configures for you** (each is conditional, backs off if you define your own): a `DataSource` (Hikari, pointing at H2 because it is on the classpath and no URL is set), an `EntityManagerFactory` (Hibernate), a `PlatformTransactionManager` (so `@Transactional` works), and the Spring Data repository proxies.
+
+#### B. The JPA annotations: used and not used
+
+| Annotation | Meaning | Used? |
+|---|---|---|
+| `@Entity`, `@Table(name = "trades")` | A class mapped to a table; name the table | Yes |
+| `@Id` | The primary key | Yes |
+| `@GeneratedValue(strategy = ...)` | How ids are produced: `IDENTITY` (auto-increment), `SEQUENCE` (a database sequence; best for batching, e.g. Oracle), `TABLE` (slow, avoid), `AUTO` | Yes |
+| `@Column(name, nullable, length, precision, scale, unique)` | Column details; `precision`/`scale` matter for `BigDecimal` | Yes |
+| `@Enumerated(EnumType.STRING)` | Store an enum by name, never by position | Yes |
+| `@OneToMany(mappedBy, cascade, orphanRemoval, fetch)` | One parent, many children; `mappedBy` names the owning field on the child | Yes |
+| `@ManyToOne(fetch = LAZY)`, `@JoinColumn` | Many children, one parent; the foreign key column | Yes |
+| `@ManyToMany`, `@JoinTable` | Many to many with a link table | No |
+| `@OneToOne` | One to one | No |
+| `@Embedded`, `@Embeddable` | A value object stored in the same table | No |
+| `@Version` | Optimistic locking column | No (mentioned in section 3) |
+| `@Transient` | Not persisted | No |
+| `@Lob` | Large text or binary | No |
+| `@CreatedDate`, `@LastModifiedDate` (+ `@EnableJpaAuditing`) | Fill audit timestamps automatically | No |
+| `@Index` (inside `@Table(indexes = ...)`) | Declare an index (matters once `ddl-auto` creates schema) | No |
+
+**Fetch types:** `LAZY` loads related data when first touched; `EAGER` loads it with the parent. JPA defaults: `@OneToMany` and `@ManyToMany` are lazy, `@ManyToOne` and `@OneToOne` are **eager**: always write `fetch = LAZY` explicitly on the latter two.
+
+**Cascade types:** `PERSIST`, `MERGE`, `REMOVE`, `REFRESH`, `DETACH`, `ALL`. Cascade only from a parent that *owns* the children (an order and its lines), never across independent aggregates.
+
+#### C. Spring Data repositories
+
+```java
+public interface TradeJpaRepository extends JpaRepository<TradeEntity, Long> { ... }
+```
+
+| You inherit | From |
+|---|---|
+| `save`, `saveAll`, `findById`, `findAll`, `deleteById`, `count`, `existsById` | `CrudRepository` |
+| `findAll(Sort)`, `findAll(Pageable)` | `PagingAndSortingRepository` |
+| `flush`, `saveAndFlush`, `deleteAllInBatch`, `getReferenceById` | `JpaRepository` |
+
+**Derived queries.** A method *name* becomes a query: `findBy` + property + keyword. Spring parses it at startup, so a typo fails at **startup**, not at 3 a.m.
+
+| Keyword | Example | JPQL idea |
+|---|---|---|
+| (none) / `Is` | `findByIsin(String isin)` | `where isin = ?` |
+| `And`, `Or` | `findByIsinAndStatus(...)` | `where isin = ? and status = ?` |
+| `Between` | `findByTradeDateBetween(a, b)` | `between` |
+| `LessThan`, `GreaterThan`, `LessThanEqual` | `findByQuantityGreaterThan(x)` | `>` |
+| `Like`, `Containing`, `StartingWith` | `findByIsinStartingWith("US")` | `like 'US%'` |
+| `In`, `NotIn` | `findByStatusIn(Collection<TradeStatus>)` | `in (...)` |
+| `IsNull`, `IsNotNull` | `findByVenueIsNull()` | `is null` |
+| `OrderBy...Desc` | `findByStatusOrderByIdDesc(s)` | `order by id desc` |
+| `Top`, `First` | `findTop10ByOrderByIdDesc()` | limit |
+| `countBy`, `existsBy`, `deleteBy` | `countByStatus(s)` | count / exists / delete |
+
+**When names get unreadable use `@Query`** with JPQL (queries over entities, not tables): `@Query("select t from TradeEntity t join fetch t.allocations where t.id = :id")`. Use `nativeQuery = true` for raw SQL. Add `@Modifying` for update and delete queries. Return types: an entity, `Optional<T>`, `List<T>`, `Page<T>`/`Slice<T>` (with a `Pageable` parameter), or an interface/record **projection** (select only some columns).
+
+#### D. Configuration keys (we set two; here are the rest)
+
+**We set** `spring.jpa.open-in-view: false`, `spring.jpa.hibernate.ddl-auto: create-drop`, and the SQL log level. **Not set, defaults shown:**
+
+| Key | Default | What it does |
+|---|---|---|
+| `spring.datasource.url` | embedded H2 in memory, generated name | JDBC URL: `jdbc:postgresql://host:5432/trades`. Real systems set this |
+| `spring.datasource.username`, `password` | `sa`, empty (embedded) | Credentials. **Environment variables, never a committed file** |
+| `spring.datasource.driver-class-name` | derived from the URL | Rarely needed |
+| `spring.datasource.hikari.maximum-pool-size` | `10` | Maximum connections. **Size it from the database's capacity and your thread count**, not "bigger is faster" |
+| `spring.datasource.hikari.minimum-idle` | same as maximum | Idle connections kept ready |
+| `spring.datasource.hikari.connection-timeout` | `30000` ms | How long a request waits for a free connection before failing |
+| `spring.datasource.hikari.max-lifetime` | `1800000` ms | Retire connections before the database or a firewall closes them |
+| `spring.jpa.hibernate.ddl-auto` | `create-drop` (embedded) or `none` | `none`, `validate` (check entities match the tables), `update` (alter; risky), `create`, `create-drop`. **Production: `validate` or `none` plus Flyway/Liquibase** |
+| `spring.jpa.show-sql` | `false` | Prints SQL to the console. Prefer the logger `org.hibernate.SQL` (what we use) |
+| `spring.jpa.properties.hibernate.format_sql` | `false` | Pretty-print SQL |
+| `spring.jpa.properties.hibernate.jdbc.batch_size` | none | Group inserts/updates into batches (not with `IDENTITY` ids) |
+| `spring.jpa.properties.hibernate.default_batch_fetch_size` | none | A global `@BatchSize` that softens N+1 |
+| `spring.jpa.properties.hibernate.generate_statistics` | `false` | Hibernate counts queries and cache hits (our N+1 test counts statements like this) |
+| `spring.jpa.database-platform` | detected | Force a Hibernate dialect (rarely needed in recent versions) |
+| `spring.jpa.open-in-view` | `true` (with a warning) | We set `false`, see section 3 |
+| `spring.sql.init.mode` | `embedded` | Run `schema.sql` / `data.sql` at startup |
+| `spring.h2.console.enabled` | `false` | Browser console at `/h2-console`. **Dev only**, never in production |
+| `spring.datasource.name`, `spring.datasource.generate-unique-name` | `true` | Unique embedded database name per start |
+
+**H2 URL options** worth knowing: `jdbc:h2:mem:trades;DB_CLOSE_DELAY=-1` keeps the in-memory database alive between connections; `MODE=Oracle` or `MODE=PostgreSQL` makes H2 imitate that database's SQL; `jdbc:h2:file:./data/trades` stores it in a file.
+
+**Real database next:** replace H2 with `postgresql` (scope `runtime`), set `spring.datasource.*` from environment variables, set `ddl-auto: validate`, and add Flyway (`spring-boot-starter-flyway`/`flyway-core`): SQL files `V1__create_trades.sql` in `src/main/resources/db/migration` run in version order, once. Day 2 does this with Postgres in Docker.
+
+#### E. Reading the SQL Hibernate sends
+
+With `org.hibernate.SQL: DEBUG` (our `dev` profile) each statement appears in the log. To also see the **bound values**, set `org.hibernate.orm.jdbc.bind: TRACE` (Hibernate 6). Habit to build: after writing any repository method, look at the SQL once. Count the statements. One query for a list is normal; one per row is N+1.
+
+#### F. Common mistakes
+
+| Mistake | Symptom | Fix |
+|---|---|---|
+| `ddl-auto: update` in production | Hibernate alters real tables on startup | `validate` + migrations |
+| `@ManyToOne` left eager | Extra joins and loads you did not ask for | `fetch = LAZY` |
+| Returning an entity from the controller | `LazyInitializationException`, leaked columns | Map to a record |
+| Pool larger than the database allows | `too many connections`, slow database | Size the pool; one pool per instance times instances |
+| `IDENTITY` ids with a bulk load | One insert per row, no batching | Use a `SEQUENCE` with an allocation size |
+| Forgetting `@Transactional` on a multi-step service method | Half the work saved on failure | Annotate the service method (this lesson, step 5) |
+| Using H2 results as proof for Oracle/Postgres behaviour | Passes locally, fails in production | Testcontainers (Day 2) |
+
 ### Step 3. Entities and the Spring Data repository
 
 **File:** `src/main/java/com/example/trade/persistence/TradeEntity.java`

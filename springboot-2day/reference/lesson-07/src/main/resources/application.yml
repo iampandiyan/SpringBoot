@@ -1,0 +1,83 @@
+# Base configuration: applies in every profile. Profile files (application-dev.yml, application-prod.yml)
+# are layered on top and win when the same key appears in both.
+spring:
+  application:
+    name: trade-service
+  profiles:
+    default: dev          # used only when no profile is activated explicitly
+  jpa:
+    open-in-view: false           # no Hibernate session during view rendering: lazy-loading mistakes fail early
+    hibernate:
+      ddl-auto: create-drop       # Hibernate builds the tables from the entities. Learning only: real systems use Flyway/Liquibase.
+
+# Our own settings, bound to the TradeProperties record (prefix "trade").
+trade:
+  max-quantity: 1000000
+  venue: XLON
+  security:
+    # HS256 needs a secret of at least 32 characters. The default below is for local development ONLY.
+    # Real environments inject JWT_SECRET from a secret store (the prod profile has no default on purpose).
+    jwt-secret: ${JWT_SECRET:dev-only-secret-change-me-0123456789abcdef}
+    token-ttl: 15m
+
+# Custom switch for the conditional bean in lesson 02.
+audit:
+  enabled: false
+
+# Resilience4j (lesson 07). "gateway" is the instance name used in the annotations on ResilientGatewayClient.
+resilience4j:
+  retry:
+    instances:
+      gateway:
+        max-attempts: 3                   # the first call plus two retries
+        wait-duration: 200ms              # base pause between attempts
+        enable-exponential-backoff: true  # 200ms, 400ms, ... so a struggling gateway gets room to recover
+        exponential-backoff-multiplier: 2
+        enable-randomized-wait: true      # jitter: callers do not all retry at the same instant
+        randomized-wait-factor: 0.5
+        retry-exceptions:
+          - com.example.trade.gateway.GatewayException
+        ignore-exceptions:                # never retry a permanent "no", or a call the open circuit refused
+          - com.example.trade.gateway.GatewayRejectedException
+          - io.github.resilience4j.circuitbreaker.CallNotPermittedException
+  circuitbreaker:
+    instances:
+      gateway:
+        sliding-window-type: COUNT_BASED
+        sliding-window-size: 10                    # judge the last 10 calls
+        minimum-number-of-calls: 5                 # no verdict before 5 calls
+        failure-rate-threshold: 50                 # open when 50% or more of the window failed
+        slow-call-duration-threshold: 2s           # a call slower than this counts as "slow"
+        slow-call-rate-threshold: 80               # open when 80% or more are slow
+        wait-duration-in-open-state: 10s           # stay open this long, then probe
+        permitted-number-of-calls-in-half-open-state: 3
+        automatic-transition-from-open-to-half-open-enabled: true
+        record-exceptions:
+          - com.example.trade.gateway.GatewayException
+        ignore-exceptions:
+          - com.example.trade.gateway.GatewayRejectedException
+        register-health-indicator: true            # the breaker state shows up in /actuator/health
+        allow-health-indicator-to-fail: false      # an OPEN breaker is shown, but does NOT turn the whole service DOWN
+  bulkhead:
+    instances:
+      gateway:
+        max-concurrent-calls: 10                   # at most 10 calls in flight to the gateway
+        max-wait-duration: 0ms                     # a caller above the limit fails at once instead of queueing
+
+# Actuator: expose only what is safe by default; the dev profile opens more.
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  info:
+    env:
+      enabled: true       # publish the "info.*" keys below at /actuator/info
+  health:
+    circuitbreakers:
+      enabled: true       # include every circuit breaker in /actuator/health (lesson 07)
+
+info:
+  app:
+    name: trade-service
+    description: Trade capture and settlement demo

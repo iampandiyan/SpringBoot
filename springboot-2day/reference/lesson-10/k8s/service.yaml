@@ -1,0 +1,14 @@
+# A Service gives a set of pods ONE stable name and address, and load-balances across the READY ones.
+apiVersion: v1
+kind: Service
+metadata:
+  name: trade-service
+  namespace: trade
+spec:
+  type: ClusterIP                # reachable only inside the cluster; an Ingress or gateway exposes it to the outside
+  selector:
+    app: trade-service           # send traffic to pods with this label
+  ports:
+    - name: http
+      port: 80                   # callers use http://trade-service.trade/
+      targetPort: http           # the container port NAMED "http" in the Deployment (8080)

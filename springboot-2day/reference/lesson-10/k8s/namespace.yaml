@@ -1,0 +1,5 @@
+# A namespace groups the objects of one system and lets you apply quotas and access rules to the group.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: trade

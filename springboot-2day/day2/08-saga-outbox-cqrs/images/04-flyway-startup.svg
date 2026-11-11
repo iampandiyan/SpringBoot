@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 360" font-family="Arial, Helvetica, sans-serif">
+<defs><marker id="a" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#333"/></marker></defs>
+<rect width="900" height="360" fill="#ffffff"/>
+<text x="450.0" y="30" font-size="20" text-anchor="middle" fill="#1a1a1a" font-weight="bold">What Flyway does at startup</text>
+<rect x="30" y="90" width="190" height="80" rx="8" fill="#e8f1fb" stroke="#2f6fb5" stroke-width="2"/>
+<text x="125.0" y="114.66666666666667" font-size="14" text-anchor="middle" fill="#1a1a1a" font-weight="bold">1. find scripts</text>
+<text x="125.0" y="134.66666666666669" font-size="14" text-anchor="middle" fill="#1a1a1a">classpath:db/migration</text>
+<text x="125.0" y="154.66666666666669" font-size="14" text-anchor="middle" fill="#1a1a1a">V1 ... V4</text>
+<rect x="250" y="90" width="190" height="80" rx="8" fill="#fff8e1" stroke="#c79100" stroke-width="2"/>
+<text x="345.0" y="114.66666666666667" font-size="14" text-anchor="middle" fill="#1a1a1a" font-weight="bold">2. read history</text>
+<text x="345.0" y="134.66666666666669" font-size="14" text-anchor="middle" fill="#1a1a1a">flyway_schema_history</text>
+<text x="345.0" y="154.66666666666669" font-size="14" text-anchor="middle" fill="#1a1a1a">(created if missing)</text>
+<rect x="470" y="90" width="190" height="80" rx="8" fill="#eaf6ec" stroke="#2e8b57" stroke-width="2"/>
+<text x="565.0" y="114.66666666666667" font-size="14" text-anchor="middle" fill="#1a1a1a" font-weight="bold">3. migrate</text>
+<text x="565.0" y="134.66666666666669" font-size="14" text-anchor="middle" fill="#1a1a1a">apply only the pending</text>
+<text x="565.0" y="154.66666666666669" font-size="14" text-anchor="middle" fill="#1a1a1a">versions, in order</text>
+<rect x="690" y="90" width="180" height="80" rx="8" fill="#f3edfb" stroke="#7e57c2" stroke-width="2"/>
+<text x="780.0" y="114.66666666666667" font-size="14" text-anchor="middle" fill="#1a1a1a" font-weight="bold">4. then JPA</text>
+<text x="780.0" y="134.66666666666669" font-size="14" text-anchor="middle" fill="#1a1a1a">Hibernate validate</text>
+<text x="780.0" y="154.66666666666669" font-size="14" text-anchor="middle" fill="#1a1a1a">checks entities</text>
+<line x1="220" y1="130" x2="250" y2="130" stroke="#333" stroke-width="2" marker-end="url(#a)"/>
+<line x1="440" y1="130" x2="470" y2="130" stroke="#333" stroke-width="2" marker-end="url(#a)"/>
+<line x1="660" y1="130" x2="690" y2="130" stroke="#333" stroke-width="2" marker-end="url(#a)"/>
+<rect x="250" y="230" width="410" height="80" rx="8" fill="#fdf2f2" stroke="#c0392b" stroke-width="2"/>
+<text x="455.0" y="254.66666666666666" font-size="14" text-anchor="middle" fill="#1a1a1a" font-weight="bold">Protection</text>
+<text x="455.0" y="274.66666666666663" font-size="14" text-anchor="middle" fill="#1a1a1a">a checksum differs from the one stored =&gt; startup stops</text>
+<text x="455.0" y="294.66666666666663" font-size="14" text-anchor="middle" fill="#1a1a1a">fix: add a NEW migration, never edit an applied one</text>
+<line x1="450" y1="170" x2="450" y2="230" stroke="#333" stroke-width="2" stroke-dasharray="6 4" marker-end="url(#a)"/>
+</svg>

@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 440" font-family="Arial, Helvetica, sans-serif">
+<defs><marker id="a" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#333"/></marker></defs>
+<rect width="900" height="440" fill="#ffffff"/>
+<text x="450.0" y="30" font-size="20" text-anchor="middle" fill="#1a1a1a" font-weight="bold">The dual-write problem, and the outbox that solves it</text>
+<rect x="20" y="50" width="420" height="370" rx="10" fill="#fdf2f2" stroke="#c0392b" stroke-width="2"/>
+<text x="32" y="72" font-size="14" text-anchor="start" fill="#1a1a1a" font-weight="bold">Dual write (broken)</text>
+<rect x="45" y="100" width="160" height="56" rx="8" fill="#e8f1fb" stroke="#2f6fb5" stroke-width="2"/>
+<text x="125.0" y="132.66666666666666" font-size="14" text-anchor="middle" fill="#1a1a1a">TradeService</text>
+<rect x="45" y="210" width="160" height="56" rx="8" fill="#eaf6ec" stroke="#2e8b57" stroke-width="2"/>
+<text x="125.0" y="232.66666666666666" font-size="14" text-anchor="middle" fill="#1a1a1a" font-weight="bold">1. UPDATE trade</text>
+<text x="125.0" y="252.66666666666666" font-size="14" text-anchor="middle" fill="#1a1a1a">Database</text>
+<rect x="245" y="210" width="170" height="56" rx="8" fill="#fff8e1" stroke="#c79100" stroke-width="2"/>
+<text x="330.0" y="232.66666666666666" font-size="14" text-anchor="middle" fill="#1a1a1a" font-weight="bold">2. send event</text>
+<text x="330.0" y="252.66666666666666" font-size="14" text-anchor="middle" fill="#1a1a1a">Broker</text>
+<line x1="125" y1="156" x2="125" y2="210" stroke="#333" stroke-width="2" marker-end="url(#a)"/>
+<line x1="205" y1="128" x2="330" y2="210" stroke="#333" stroke-width="2" marker-end="url(#a)"/>
+<text x="40" y="310" font-size="13" text-anchor="start" fill="#1a1a1a">Crash between 1 and 2: the trade is settled but</text>
+<text x="40" y="330" font-size="13" text-anchor="start" fill="#1a1a1a">nobody is told. Send first, DB fails: the world</text>
+<text x="40" y="350" font-size="13" text-anchor="start" fill="#1a1a1a">heard about a settlement that never happened.</text>
+<text x="40" y="380" font-size="13" text-anchor="start" fill="#1a1a1a" font-weight="bold">Two systems, no shared transaction.</text>
+<rect x="460" y="50" width="420" height="370" rx="10" fill="#eaf6ec" stroke="#2e8b57" stroke-width="2"/>
+<text x="472" y="72" font-size="14" text-anchor="start" fill="#1a1a1a" font-weight="bold">Transactional outbox (safe)</text>
+<rect x="480" y="100" width="380" height="70" rx="8" fill="#eaf6ec" stroke="#2e8b57" stroke-width="2"/>
+<text x="670.0" y="129.66666666666666" font-size="14" text-anchor="middle" fill="#1a1a1a" font-weight="bold">ONE local transaction</text>
+<text x="670.0" y="149.66666666666666" font-size="14" text-anchor="middle" fill="#1a1a1a">UPDATE trade  +  INSERT outbox_event</text>
+<rect x="480" y="215" width="160" height="56" rx="8" fill="#f3edfb" stroke="#7e57c2" stroke-width="2"/>
+<text x="560.0" y="237.66666666666666" font-size="14" text-anchor="middle" fill="#1a1a1a" font-weight="bold">2. later</text>
+<text x="560.0" y="257.66666666666663" font-size="14" text-anchor="middle" fill="#1a1a1a">OutboxRelay</text>
+<rect x="700" y="215" width="160" height="56" rx="8" fill="#fff8e1" stroke="#c79100" stroke-width="2"/>
+<text x="780.0" y="247.66666666666666" font-size="14" text-anchor="middle" fill="#1a1a1a">Broker / handlers</text>
+<line x1="560" y1="170" x2="560" y2="215" stroke="#333" stroke-width="2" marker-end="url(#a)"/>
+<text x="595" y="198" font-size="12" text-anchor="middle" fill="#444">poll</text>
+<line x1="640" y1="243" x2="700" y2="243" stroke="#333" stroke-width="2" marker-end="url(#a)"/>
+<text x="480" y="310" font-size="13" text-anchor="start" fill="#1a1a1a">Both rows commit together or not at all.</text>
+<text x="480" y="330" font-size="13" text-anchor="start" fill="#1a1a1a">The relay sends later and marks the row published.</text>
+<text x="480" y="350" font-size="13" text-anchor="start" fill="#1a1a1a">Crash after send, before mark: sent twice</text>
+<text x="480" y="370" font-size="13" text-anchor="start" fill="#1a1a1a" font-weight="bold">=&gt; at-least-once, so consumers must be idempotent.</text>
+</svg>

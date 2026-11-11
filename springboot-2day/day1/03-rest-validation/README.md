@@ -436,6 +436,131 @@ Content-Type: application/json
 - *`400` on a request that looks right*: a bad JSON escape. In PowerShell, quote as shown (`-d '{\"isin\":...}'`).
 - *`415 Unsupported Media Type`*: the `Content-Type: application/json` header is missing.
 
+### Deep dive: Spring MVC, Bean Validation and Jackson, the three libraries behind the web layer
+
+Steps 1 to 3 used three frameworks without introducing them properly. This section does that: what each is, why it exists, what it can do beyond what we used, and the configuration keys that change its behaviour.
+
+#### A. Spring MVC
+
+**What it is.** The web part of the Spring Framework (`spring-webmvc`, brought by `spring-boot-starter-web`). It implements the *front controller* pattern: `DispatcherServlet` receives every HTTP request, asks **handler mappings** which controller method matches the URL and verb, asks **argument resolvers** to build the method's parameters (path, query, body), calls it, then asks **return value handlers** and **message converters** to write the response.
+
+**Why.** Without it you write raw servlets: parse the URL, read the stream, convert JSON, set the status, and repeat that in every endpoint.
+
+**The annotations: used here and not used here.**
+
+| Annotation | Purpose | Example | In our code? |
+|---|---|---|---|
+| `@RestController` | Controller whose return values become the response body | `class TradeController` | Yes |
+| `@RequestMapping("/trades")` | Common prefix (also verb and media-type filters) | on the class | Yes |
+| `@GetMapping`, `@PostMapping`, `@PutMapping`, `@PatchMapping`, `@DeleteMapping` | Verb plus path shortcut | `@GetMapping("/{id}")` | Yes (GET and POST; DELETE is not mapped on purpose, so it answers 405) |
+| `@PathVariable` | A value from the URL path | `@PathVariable Long id` | Yes |
+| `@RequestBody` | Read the HTTP body into an object (Jackson) | `@RequestBody CreateTradeRequest req` | Yes |
+| `@RequestParam` | A query-string value, optional with a default | `@RequestParam(required = false) TradeStatus status` | Yes (`?status=`) |
+| `@Valid` / `@Validated` | Run Bean Validation on the argument | `@Valid @RequestBody ...` | Yes |
+| `@ResponseStatus` | Fixed status for a method or exception | `@ResponseStatus(HttpStatus.CREATED)` | No (we use `ResponseEntity`) |
+| `ResponseEntity<T>` | Full control: status, headers, body | `ResponseEntity.created(uri).body(t)` | Yes |
+| `@RequestHeader` | A request header | `@RequestHeader("Idempotency-Key") String key` | No (Day 2 uses the idea) |
+| `@CookieValue` | A cookie value | | No |
+| `@ModelAttribute` | Bind form fields to an object | | No (HTML forms, not JSON APIs) |
+| `@RequestPart` | One part of a multipart (file upload) request | | No |
+| `@CrossOrigin` | Allow another website's JavaScript to call this API (CORS) | | No (lesson 05 mentions CORS) |
+| `@ExceptionHandler`, `@RestControllerAdvice` | Turn exceptions into responses | `ApiExceptionHandler` | Yes (step 4) |
+| `@GetMapping(produces = "application/json")`, `consumes` | Restrict by media type; a mismatch gives 406 or 415 | | No |
+
+**Status codes you meet from the framework itself** (not from your code): `404` no mapping, `405` wrong verb, `406` cannot produce the requested type, `415` body type not supported (missing `Content-Type`), `400` unreadable body or bad parameter type.
+
+#### B. Bean Validation (Jakarta Validation)
+
+**What it is.** A standard (JSR 380, package `jakarta.validation`) for describing constraints as **annotations** on fields, plus a validator that checks them. The implementation is **Hibernate Validator**; it has nothing to do with the Hibernate ORM. Spring integrates it through `spring-boot-starter-validation`.
+
+**Why.** Rules such as "ISIN has 12 characters" written as `if` statements are repeated, forgotten and inconsistent. Annotations put the rule next to the data and give a uniform error.
+
+**Constraint annotations (all in `jakarta.validation.constraints`):**
+
+| Annotation | Checks | Null passes? | Used here? |
+|---|---|---|---|
+| `@NotNull` | not null | no | Yes |
+| `@NotBlank` | text with at least one non-space character | no | Yes |
+| `@NotEmpty` | text, collection or map not empty | no | |
+| `@Size(min, max)` | length of text / size of a collection | yes | |
+| `@Pattern(regexp)` | text matches a regular expression | yes | Yes (ISIN) |
+| `@Positive`, `@PositiveOrZero`, `@Negative`, `@NegativeOrZero` | sign of a number | yes | Yes (`@Positive`) |
+| `@Min`, `@Max` | numeric bounds (integers) | yes | |
+| `@DecimalMin`, `@DecimalMax` | bounds for `BigDecimal` and text numbers | yes | |
+| `@Digits(integer, fraction)` | maximum digits before and after the point | yes | |
+| `@Email` | e-mail shape | yes | |
+| `@Past`, `@PastOrPresent`, `@Future`, `@FutureOrPresent` | date and time | yes | |
+| `@AssertTrue`, `@AssertFalse` | boolean value | yes | |
+| `@Valid` (on a field) | **cascade**: validate the nested object too | n/a | |
+
+"Null passes" matters: `@Positive` on a field that is `null` is **valid**. Combine with `@NotNull` to forbid null.
+
+**Useful attributes:** `message` (text, may use `{...}` keys from a message bundle), `groups` (apply a rule only in a named scenario, for example `OnCreate`), `payload`.
+
+**`@Valid` or `@Validated`?** `@Valid` (Jakarta) triggers validation and **cascades** into nested objects. `@Validated` (Spring) additionally supports **groups** and can be put on a **class** to validate method parameters of a bean (`@Validated class Service { void f(@Positive int x) }`) and on `@ConfigurationProperties` classes (lesson 02).
+
+**Writing your own constraint** (when no built-in fits, for example a real ISIN check digit):
+
+```java
+@Target({ElementType.FIELD, ElementType.PARAMETER, ElementType.RECORD_COMPONENT})
+@Retention(RetentionPolicy.RUNTIME)
+@Constraint(validatedBy = IsinValidator.class)
+public @interface ValidIsin {
+    String message() default "not a valid ISIN";
+    Class<?>[] groups() default {};
+    Class<? extends Payload>[] payload() default {};
+}
+
+public class IsinValidator implements ConstraintValidator<ValidIsin, String> {
+    public boolean isValid(String v, ConstraintValidatorContext c) {
+        return v == null || IsinChecksum.valid(v);   // null is for @NotNull to reject
+    }
+}
+```
+
+**Where it runs:** on controller arguments (`MethodArgumentNotValidException` for bodies, `HandlerMethodValidationException` in Spring 6.1+ for parameters), on `@Validated` beans (`ConstraintViolationException`), on `@ConfigurationProperties` (startup fails), and on JPA entities before persisting (if you opt in). Our handler turns the first into a `ProblemDetail` with an `errors` field.
+
+#### C. Jackson
+
+**What it is.** Jackson is the JSON library: it converts **Java objects to JSON** (serialization) and **JSON to Java objects** (deserialization). `jackson-databind` is the part you use; Boot adds modules for Java 8 dates, `Optional` and records. Spring MVC calls it through an `HttpMessageConverter`.
+
+**Why.** Hand-written JSON parsing is slow to write and error-prone. Jackson reads our `CreateTradeRequest` record and writes our `Trade` straight from the declared fields.
+
+**Annotations you will meet:**
+
+| Annotation | What it does |
+|---|---|
+| `@JsonProperty("trade_id")` | Use another JSON name for a field |
+| `@JsonIgnore` | Never read or write this field |
+| `@JsonIgnoreProperties(ignoreUnknown = true)` | Ignore JSON fields the class does not know |
+| `@JsonInclude(JsonInclude.Include.NON_NULL)` | Skip null fields in the output |
+| `@JsonFormat(pattern = "yyyy-MM-dd")` | Date and number format for one field |
+| `@JsonCreator` | Choose the constructor or factory used for reading |
+
+**Configuration keys (`application.yml`), none used in our files, defaults shown:**
+
+| Key | Default | Effect |
+|---|---|---|
+| `spring.jackson.default-property-inclusion` | `always` | `non_null` omits null fields everywhere |
+| `spring.jackson.serialization.write-dates-as-timestamps` | `false` | Dates as ISO text (`2026-11-09`) instead of numbers |
+| `spring.jackson.deserialization.fail-on-unknown-properties` | `false` | `true` rejects JSON with unexpected fields (stricter API) |
+| `spring.jackson.property-naming-strategy` | none | e.g. `SNAKE_CASE` for the whole API |
+| `spring.jackson.time-zone` | none | Zone used when writing dates |
+| `spring.jackson.mapper.accept-case-insensitive-enums` | `false` | `new` accepted for `NEW` |
+
+**Two behaviours to know.** (1) `BigDecimal` is written as a JSON **number**, so `189.50` stays `189.50`, but a client that parses it as a floating-point number may lose precision; for money some APIs send a string. (2) By default Boot does **not** fail on unknown JSON fields, so a client typo (`qty` for `quantity`) is silently ignored and the field arrives as `null`. That is why our `@NotNull` matters.
+
+#### D. Common mistakes in this layer
+
+| Mistake | What you see | Fix |
+|---|---|---|
+| `@Valid` missing on the `@RequestBody` parameter | Bad data reaches the service; annotations do nothing | Add `@Valid` |
+| `@Positive` without `@NotNull` | `null` passes | Add `@NotNull` |
+| Validating a nested object without `@Valid` on the field | Inner rules never run | Put `@Valid` on the field |
+| Returning the JPA entity directly | Lazy-loading errors, leaking columns | Return a record or DTO |
+| Sending JSON without `Content-Type` | `415 Unsupported Media Type` | `-H "Content-Type: application/json"` |
+| Throwing `IllegalArgumentException` for "not found" | `500` | A domain exception mapped in `ApiExceptionHandler` |
+
 ### Step 4. The central exception handler
 
 **File:** `src/main/java/com/example/trade/web/ApiExceptionHandler.java`

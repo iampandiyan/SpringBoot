@@ -10,11 +10,11 @@ Verified on this machine:
 |---|---|---|
 | Java | Temurin 21.0.12 | everything |
 | Docker Desktop | 29.9.2 (daemon running) | Day 2 (Postgres, Kafka, image build) |
-| kubectl | v1.36.1 | Day 2 file 10 |
+| kubectl | v1.36.1 (client only; no cluster is configured) | Day 2 file 10 (reading and offline checks) |
 | VS Code | 1.145.2 | editor |
 | git | 2.47 | optional |
 | Maven | **not installed, not needed**: the project ships the Maven Wrapper (`mvnw`) | |
-| kind or minikube | **not installed yet**, install before file 10 (see that file) | local Kubernetes |
+| kind or minikube | **not installed**; optional, to apply the manifests of file 10 on a local cluster | local Kubernetes |
 
 Spring Boot version: **3.5.16**, the latest 3.x on Maven Central at the time of writing. start.spring.io now offers only 4.x, so the `pom.xml` in `project/` was written by hand with the 3.5.16 parent. The interview material (Jakarta namespace, `SecurityFilterChain`, Micrometer Tracing, `ProblemDetail`) is the same on Boot 3.x and 4.x. Be ready to say: "I built on 3.5; I know 4.x moves to Spring Framework 7 and modular starters."
 
@@ -64,7 +64,7 @@ The code lives in `project/` and grows file by file. Each topic file lists exact
 | 10:15-11:45 | 08 Saga, outbox, CQRS | Outbox table plus relay |
 | 11:45-13:15 | 09 Kafka with Spring | Producer, idempotent consumer |
 | 13:15-14:00 | Lunch | |
-| 14:00-15:30 | 10 Docker, Kubernetes | Image running on local cluster |
+| 14:00-15:30 | 10 Docker, PostgreSQL, Kubernetes | Image and Compose stack running; manifests read |
 | 15:30-17:00 | 11 System design: trade settlement | Whiteboard design |
 | 17:00-19:00 | 12 Mock interview, story rehearsal | Your stories, rehearsed |
 | 19:30-20:30 | 99 Cheatsheet, then sleep | |
@@ -83,14 +83,22 @@ springboot-2day/
     01-spring-core/   README.md  +  images/*.svg
     02-boot-internals/  03-rest-validation/  04-data-jpa/  05-security-jwt/  06-testing/
                       (each: README.md + images/*.svg)
-  day2/07..12         (coming)
-  99-cheatsheet-and-interview-qa.md   (coming)
+  day2/
+    07-microservices-resilience/  08-saga-outbox-cqrs/  09-kafka/  10-containers-kubernetes/
+    11-system-design-settlement/  12-mock-interview/
+                      (each: README.md + images/*.svg and .png; 11 and 12 have no code of their own)
+  99-cheatsheet-and-interview-qa.md   the night-before sheet: annotations, config keys, numbers, commands, 42 rapid-fire answers
   reference/
     lesson-00/        working project at the END of lesson 00
     lesson-01/        working project at the END of lesson 01 (= lesson 00 + that lesson's changes)
     lesson-02 ... lesson-06   the same, one per lesson (lesson-06 = the finished Day 1 project, 79 tests)
+    lesson-07 ... lesson-10   Day 2 projects (07: 91 tests, 08: 107, 09: 111, 10: 113 and the final project,
+                              with Dockerfile, docker-compose.yml and k8s/)
   tools/mdviewer.html     browser Markdown viewer (see below), mdviewer.png = its screenshot
   tools/check_lesson.py   my checker (not needed for studying)
+  tools/check_k8s.py      offline structure check for the Kubernetes manifests of lesson 10
+  tools/drill.py          interview drill: random questions from every lesson's quiz (used in lesson 12)
+  tools/build_lesson.py, make_day1_svgs.py, make_day2_svgs.py, render_svgs.py   how the lessons and diagrams are produced
 ```
 
 **How a lesson works**
@@ -126,7 +134,9 @@ Open each lesson's `README.md` in VS Code and press `Ctrl+Shift+V` for the previ
 
 Tip: skipped automatically when indexing: `target`, `node_modules`, `.git` and `.mvn` folders.
 
-**Trust but verify:** my checker rebuilds each lesson from the code blocks in its README alone (starting from the previous lesson), compares the result with `reference/`, runs the build and tests, and checks the 11 headings. Every lesson listed above has passed it.
+**Trust but verify:** my checker rebuilds each lesson from the code blocks in its README alone (starting from the previous lesson), compares the result with `reference/`, runs the build and tests, and checks the 11 headings. Lessons 00-10 have passed it. Lessons 11 and 12 contain no code, so only their headings and links were checked.
+
+**What was run and what was not (Day 2).** Run and verified on this machine: the lesson 07-10 projects and tests, the Kafka flows (an embedded broker in the tests, a real broker in Docker Compose), two tests on a real PostgreSQL (Testcontainers), the Docker image, the full Compose stack (app, PostgreSQL, Kafka), graceful shutdown and a hardened run (non-root, read-only filesystem, 512 MB). **Not run:** the Kubernetes manifests in `reference/lesson-10/k8s`: there was no cluster, so they passed only the offline structure check `tools/check_k8s.py`. Lesson 10 says so, too. Install `kind` or turn on Kubernetes in Docker Desktop and apply them to close that gap.
 
 ## 5. Ground rules for interview answers
 

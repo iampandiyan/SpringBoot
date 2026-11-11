@@ -278,6 +278,113 @@ Start-Process target\site\jacoco\index.html
 - *`Error opening zip file or JAR manifest missing : ...mockito-core...jar`*: the dependency plugin block is missing, so `${org.mockito:mockito-core:jar}` was never filled in.
 - *`Could not find or load main class @{argLine}`*: you wrote `${argLine}` (early) instead of `@{argLine}`, or JaCoCo's `prepare-agent` is missing.
 
+### Deep dive: the testing frameworks and the Maven test plugins
+
+Lessons 00 to 05 already ran tests. This section names every testing library and plugin you now use, says what each is for, shows the options you have not used, and lists the commands (syntax, why, when).
+
+#### A. What `spring-boot-starter-test` brings
+
+| Library | What it is | Why we need it | Typical line |
+|---|---|---|---|
+| **JUnit 5 (Jupiter)** | The test framework: finds and runs test methods, reports results. Three parts: *Platform* (the launcher), *Jupiter* (the annotations and API) and *Vintage* (runs old JUnit 4 tests). | Without a runner there is no "test". | `@Test void createThenSettle() { ... }` |
+| **AssertJ** | A fluent assertion library. | Readable checks and good failure messages. | `assertThat(t.status()).isEqualTo(NEW)` |
+| **Mockito** | Creates **mocks**: stand-ins that you program (`when(...).thenReturn(...)`) and later verify (`verify(repo).save(...)`). | Isolate the class under test from a collaborator. | `var repo = mock(TradeRepository.class)` |
+| **Spring Test** | Starts a Spring context inside a test; offers `MockMvc`, `TestRestTemplate`, `@MockitoBean`. | Test wiring, web, security and persistence for real. | `@SpringBootTest`, `@WebMvcTest` |
+| **Hamcrest**, **JSONassert**, **JsonPath** | Older matcher library, JSON comparison, and a query language for JSON. | `jsonPath("$.status")` in `MockMvc` assertions. | `.andExpect(jsonPath("$.status").value("NEW"))` |
+| **Awaitility** | Wait until an asynchronous condition becomes true. | Kafka and other async tests on Day 2. | `await().until(...)` |
+| `spring-security-test` | (lesson 05) `jwt()`, `httpBasic()`, `@WithMockUser`. | Test secured endpoints. | |
+
+#### B. JUnit 5: the annotations
+
+| Annotation | Meaning | Used? |
+|---|---|---|
+| `@Test` | A test method | Yes |
+| `@ParameterizedTest` + `@CsvSource`, `@ValueSource`, `@MethodSource`, `@EnumSource` | Run one method with many inputs | Yes (step 3) |
+| `@BeforeEach`, `@AfterEach` | Run before/after every test | Yes |
+| `@BeforeAll`, `@AfterAll` | Run once per class (static, unless `@TestInstance(PER_CLASS)`) | |
+| `@DisplayName("...")` | A readable name in reports | |
+| `@Nested` | Group tests in an inner class, sharing a setup | |
+| `@Disabled("reason")` | Skip a test, always with a reason | |
+| `@Tag("slow")` | Label tests, then include or exclude them (`-Dgroups=slow`) | |
+| `@Timeout(2)` | Fail a test that takes longer than 2 seconds | |
+| `@RepeatedTest(5)` | Run a test several times (flaky-test hunting) | |
+| `@TempDir` | A temporary folder, deleted after | |
+| `assertThrows(Type.class, () -> ...)` | Check that code throws | Yes |
+
+#### C. AssertJ and Mockito in a nutshell
+
+| Task | Code |
+|---|---|
+| Compare values | `assertThat(x).isEqualTo(y)`, `.isNotNull()`, `.isTrue()` |
+| Collections | `assertThat(list).hasSize(2).extracting(Trade::isin).containsExactly("A","B")` |
+| Numbers (BigDecimal) | `assertThat(price).isEqualByComparingTo("189.50")` (ignores scale) |
+| Exceptions | `assertThatThrownBy(() -> svc.settle(99L)).isInstanceOf(TradeNotFoundException.class)` |
+| Program a mock | `when(repo.findById(1L)).thenReturn(Optional.of(t))` |
+| Verify a call | `verify(repo).save(any())`, `verify(repo, never()).save(any())`, `verify(repo, times(2))...` |
+| Capture an argument | `ArgumentCaptor<Trade> c = ArgumentCaptor.forClass(Trade.class); verify(repo).save(c.capture());` |
+| Spring bean replaced by a mock | `@MockitoBean TradeRepository repo;` (Spring Boot 3.4+; older code uses `@MockBean`) |
+
+**Mock vs spy:** a *mock* does nothing until programmed; a *spy* wraps a real object and calls the real code unless you override a method. Mocks of **types you own** are fine; avoid mocking value types and the framework.
+
+#### D. `MockMvc`, the web test tool
+
+`MockMvc` calls the Spring MVC stack **without opening a socket**: the request goes through `DispatcherServlet`, filters, validation and exception handlers, but no Tomcat starts. Fast, and good for status codes, JSON bodies and security rules.
+
+```java
+mockMvc.perform(post("/trades").contentType(APPLICATION_JSON).content(json).with(jwt()...))
+       .andExpect(status().isCreated())
+       .andExpect(header().exists("Location"))
+       .andExpect(jsonPath("$.status").value("NEW"));
+```
+
+Step 5 of this lesson uses the real thing (`TestRestTemplate` over a random port) for the few end-to-end tests. Rule: use `MockMvc` for web-layer behaviour, real HTTP for "does it start and respond".
+
+#### E. Testcontainers (used on Day 2)
+
+**What it is.** A Java library that starts real services (Postgres, Kafka, Redis) in **Docker containers** from inside a test, and throws them away after. **Why:** H2 is not Postgres; a container is. It needs Docker running. Boot 3.1+ wires it with `@ServiceConnection`, so the container's URL replaces `spring.datasource.url` automatically.
+
+#### F. The Maven plugins that run tests (options not used above)
+
+| Plugin | Phase | What it does | Options you did not use |
+|---|---|---|---|
+| **maven-surefire-plugin** | `test` | Runs **unit tests**: classes named `*Test`, `Test*`, `*Tests`, `*TestCase` | `<includes>`/`<excludes>` (name patterns), `<groups>`/`<excludedGroups>` (JUnit tags), `<parallel>` and `<forkCount>` (parallel tests), `<skipTests>`, `<trimStackTrace>`, `<rerunFailingTestsCount>` (retry flaky tests: use sparingly), `<reportsDirectory>` |
+| **maven-failsafe-plugin** | `integration-test`, `verify` | Runs **integration tests**: classes named `*IT`, `IT*`, `*ITCase`, and **always runs `post-integration-test` cleanup** even after a failure | Same style of options. Use it when integration tests need setup/teardown around them, or you want a separate, slower stage |
+| **jacoco-maven-plugin** | `prepare-package`/`verify` | Coverage report (we used it) | `check` goal with `<rules>` that **fails the build** under a minimum (`<minimum>0.80</minimum>`), `<excludes>` for generated classes, `merge` and `report-aggregate` for several modules |
+
+Surefire writes `target/surefire-reports/` (plain text and XML per class); CI servers read the XML to draw test graphs.
+
+#### G. The test commands: syntax, why, when
+
+All start with `.\mvnw.cmd` (see the Maven deep dive in lesson 00).
+
+| Command | Meaning | When |
+|---|---|---|
+| `.\mvnw.cmd test` | Compile and run all unit tests (Surefire). | After each change |
+| `.\mvnw.cmd "-Dtest=TradeServiceTest" test` | Run one class. | Fixing one failing class |
+| `.\mvnw.cmd "-Dtest=TradeServiceTest#createThenSettle" test` | Run one method. | Fixing one failing test |
+| `.\mvnw.cmd "-Dtest=Trade*Test,Security*Test" test` | Run classes matching patterns (comma list). | A feature area |
+| `.\mvnw.cmd "-Dgroups=slow" test` | Run only tests tagged `@Tag("slow")`. | Separate fast and slow suites |
+| `.\mvnw.cmd verify` | Everything up to `verify`: tests, package, JaCoCo report, Failsafe if configured. | Before pushing |
+| `.\mvnw.cmd -o test` | Offline run. | No network |
+| `.\mvnw.cmd -DfailIfNoTests=false "-Dtest=X" test` | Do not fail when a pattern matches nothing (useful in multi-module builds). | Multi-module runs |
+| `.\mvnw.cmd -Dsurefire.failIfNoSpecifiedTests=false "-Dtest=X" test` | The Surefire 3 spelling of the same idea. | Same |
+| `.\mvnw.cmd test -DtrimStackTrace=false` | Show full stack traces in test failures. | Debugging a failure |
+| `.\mvnw.cmd -DskipTests package` | Build without running tests. | You need the jar and tests already passed |
+
+**Reading a test result:** `Tests run: 79, Failures: 0, Errors: 0, Skipped: 0`. A **failure** is an assertion that was false; an **error** is an unexpected exception (including a context that did not start); **skipped** are `@Disabled` or filtered. The text report names the first line of the stack that is in your code.
+
+#### H. Common mistakes
+
+| Mistake | Symptom | Fix |
+|---|---|---|
+| `@SpringBootTest` for a pure rule | Slow suite | Unit test with `new` |
+| Mocking everything | Tests pass while the app is broken | Use fakes and real components; mock only boundaries |
+| Test order dependence (a shared database or bean state) | Passes alone, fails together | Reset state in `@BeforeEach`; avoid sharing |
+| `assertThat(a).isEqualTo(b)` on `BigDecimal` | Fails for `189.5` vs `189.50` | `isEqualByComparingTo` |
+| Asserting on log text | Brittle | Assert on behaviour and results |
+| Sleeping in async tests | Slow and flaky | Awaitility |
+| Chasing 100% coverage | Assertion-free tests | Use coverage to find *untested* code only |
+
 ### Step 2. Shared test data and a Mockito unit test
 
 **File:** `src/test/java/com/example/trade/TradeFixtures.java`

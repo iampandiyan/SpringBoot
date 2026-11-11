@@ -321,6 +321,111 @@ public record SecurityProperties(
 
 **Checkpoint:** `.\mvnw.cmd -q compile` silent.
 
+### Deep dive: Spring Security, step by step (the framework behind this lesson)
+
+Step 1 added two starters and, as the checkpoint warned, the whole application started answering `401`. This section explains the framework: what it is, why it exists, how a request moves through it, every building block, and the configuration options we did not use.
+
+#### A. What is it, and why do we need it?
+
+**Spring Security** is the standard security framework of the Spring world. It provides **authentication** (who are you), **authorization** (what may you do) and protection against common attacks (CSRF, session fixation, clickjacking, header attacks), as a chain of servlet filters.
+
+Why not write it yourself? Security code that is "almost right" is the worst kind of bug, and the list of details is long (timing-safe password comparison, algorithm upgrades, session handling, header hardening). The framework encodes ten years of fixes. In your EJB days this was the container's `@RolesAllowed`/`web.xml` security plus a vendor realm; here it is explicit code and configuration that you can read and test.
+
+**"Secure by default":** the moment `spring-boot-starter-security` is on the classpath, Boot protects every URL with HTTP Basic or a login form, generates a user called `user` and prints a random password in the log (`Using generated security password: ...`). That is why a new project answers `401`.
+
+#### B. The building blocks, in the order a request meets them
+
+[![Two filter chains](images/01-two-filter-chains.png)](images/01-two-filter-chains.svg)
+
+| # | Component | Job | In our project |
+|---|---|---|---|
+| 1 | **`DelegatingFilterProxy` / `FilterChainProxy`** | The single entry filter that picks the right `SecurityFilterChain` for the URL. | Selects between our two chains |
+| 2 | **`SecurityFilterChain`** | An ordered list of security filters for the URLs it matches. You declare it as a `@Bean`. | `authChain` (`/auth/**`) and `apiChain` (the rest) |
+| 3 | **Filters inside the chain** | Each does one thing: read credentials, check a token, check CSRF, write headers, translate exceptions. | `BearerTokenAuthenticationFilter`, `BasicAuthenticationFilter`, `AuthorizationFilter`, `ExceptionTranslationFilter` |
+| 4 | **`Authentication`** | The object that represents "who": *principal* (name), *credentials*, *authorities* (roles). Before checking it is "unauthenticated"; after, "authenticated". | A `JwtAuthenticationToken` for API calls |
+| 5 | **`AuthenticationManager` / `AuthenticationProvider`** | Decides whether the credentials are valid. | The JWT provider verifies the token; the Basic one uses `UserDetailsService` + `PasswordEncoder` |
+| 6 | **`UserDetailsService`** | Loads a user (name, password hash, roles) by name. | Our in-memory users |
+| 7 | **`PasswordEncoder`** | Hashes and verifies passwords. | `DelegatingPasswordEncoder` (bcrypt) |
+| 8 | **`SecurityContext` / `SecurityContextHolder`** | Holds the current `Authentication` in a thread-local, so any code can ask "who is the caller?". | Used by `@PreAuthorize` |
+| 9 | **Authorization** | URL rules (`authorizeHttpRequests`) and method rules (`@PreAuthorize`). | Both |
+| 10 | **`ExceptionTranslationFilter`** | Turns `AuthenticationException` into `401` and `AccessDeniedException` into `403`. | Our `403` mapping in step 5 |
+
+**The 401/403 rule again:** not authenticated yet means the *entry point* answers `401`; authenticated but not allowed means the *access-denied handler* answers `403`.
+
+#### C. Our configuration, line by line
+
+| Code | What it does | Why |
+|---|---|---|
+| `http.securityMatcher("/auth/**")` | This chain only handles URLs under `/auth` | Two chains, two jobs |
+| `@Order(1)` / `@Order(2)` | The first matching chain wins | Specific chain first, catch-all last |
+| `.csrf(csrf -> csrf.disable())` | Switch off CSRF protection | No cookies, so nothing to forge (section 3) |
+| `.sessionManagement(... STATELESS)` | Never create or use an `HttpSession` | Every request carries its own token |
+| `.authorizeHttpRequests(a -> a.anyRequest().authenticated())` | Everything needs a logged-in caller | Deny by default |
+| `.requestMatchers(...).permitAll()` | Open a URL to everyone | Health probes |
+| `.requestMatchers("/actuator/**").hasRole("ADMIN")` | Role check | Protect internals |
+| `.oauth2ResourceServer(o -> o.jwt(...))` | Accept `Authorization: Bearer <jwt>` and validate it | Our API is a **resource server** |
+| `JwtAuthenticationConverter` | Maps token claims to Spring authorities (`roles` to `ROLE_...`) | So `hasRole('OPS')` works |
+| `PasswordEncoderFactories.createDelegatingPasswordEncoder()` | Bcrypt with an `{id}` prefix | Algorithm upgrades without a flag day |
+
+#### D. The `HttpSecurity` options we did not use
+
+| Option | What it does | When you need it |
+|---|---|---|
+| `.httpBasic(...)` | HTTP Basic authentication | We use it on `/auth/**` |
+| `.formLogin(...)` | HTML login page plus a session cookie | Server-rendered web apps |
+| `.logout(...)` | A logout URL that clears the session | Same |
+| `.oauth2Login(...)` | "Sign in with Google/Okta" for a **web app** (the *client* role) | A user-facing site, not an API |
+| `.cors(...)` | Allow JavaScript from another origin to call the API | A browser front end on another domain/port |
+| `.headers(...)` | Security headers (`X-Content-Type-Options`, `Strict-Transport-Security`, `Content-Security-Policy`, frame options) | Tuning the defaults, which are already sound |
+| `.exceptionHandling(...)` | Custom `401`/`403` responses | Used in step 5 for a JSON `403` |
+| `.rememberMe(...)` | Long-lived login cookie | Browser apps |
+| `.requiresChannel(...)` | Force HTTPS | Usually done by the load balancer instead |
+| `.addFilterBefore(...)`, `.addFilterAfter(...)` | Insert your own filter (for example an API-key filter) | Special authentication |
+| `.requestMatchers(HttpMethod.GET, "/trades/**")` | Rule per verb | Read for all, write for few |
+| `.hasAnyRole(..)`, `.hasAuthority(..)`, `.access(...)` | Other authorization expressions | Scopes (`SCOPE_trade.read`) instead of roles |
+
+**Method security** (`@EnableMethodSecurity`): `@PreAuthorize` (check before), `@PostAuthorize` (check the returned object), `@PreFilter` / `@PostFilter` (filter collections), `@Secured`, `@RolesAllowed`. Expressions can read arguments: `@PreAuthorize("#owner == authentication.name")`.
+
+#### E. Configuration keys
+
+| Key | What it does |
+|---|---|
+| `spring.security.user.name`, `.password`, `.roles` | Replaces the random generated user. A quick dev user, **never a production mechanism** |
+| `spring.security.oauth2.resourceserver.jwt.issuer-uri` | Validate tokens from this identity provider; keys are discovered automatically (the "one line" in section 3) |
+| `spring.security.oauth2.resourceserver.jwt.jwk-set-uri` | Download the public keys (JWKS) from this URL directly |
+| `spring.security.oauth2.resourceserver.jwt.public-key-location` | A public key file for RS256 without a JWKS endpoint |
+| `spring.security.oauth2.resourceserver.jwt.audiences` | Required `aud` values |
+| `spring.security.oauth2.resourceserver.opaquetoken.*` | For **opaque** tokens checked by calling the provider's introspection endpoint instead of decoding a JWT |
+| `spring.security.oauth2.client.registration.*` | A web app logging users in with an external provider |
+| Our own: `trade.security.jwt-secret`, `token-ttl` | The demo signing secret and token lifetime, bound by `SecurityProperties` |
+
+#### F. The JWT libraries
+
+**Nimbus JOSE + JWT** (`com.nimbusds`) is the library Spring Security itself uses; it came with `starter-oauth2-resource-server`. We use it only through Spring's `JwtEncoder`/`JwtDecoder`. Alternatives you will meet in other code bases: **jjwt** (`io.jsonwebtoken`) and **java-jwt** (Auth0). The concepts (header, claims, signature, expiry) are identical.
+
+#### G. Calling a secured API from the terminal
+
+You use the syntax from the curl deep dive in lesson 00:
+
+| Task | Command | Notes |
+|---|---|---|
+| Log in as `alice` (role TRADER) with Basic auth and get a token | `curl.exe -s -u alice:password -X POST localhost:8080/auth/token` | `-u user:pass` builds the `Authorization: Basic ...` header for you |
+| Put the token in a variable (PowerShell) | `$T = (curl.exe -s -u alice:password -X POST localhost:8080/auth/token \| ConvertFrom-Json).access_token` | `ConvertFrom-Json` parses JSON; `.access_token` picks one field |
+| Call the API with it | `curl.exe -s -i -H "Authorization: Bearer $T" localhost:8080/trades` | `Bearer` is the scheme name; one space then the token |
+| Read the token's payload | paste the token into a decoder, or split on `.` and base64-decode the middle part | Proves the payload is readable: **signed, not encrypted** |
+
+#### H. Common mistakes
+
+| Mistake | Symptom | Fix |
+|---|---|---|
+| Forgetting `Bearer ` (with the space) | `401` | `-H "Authorization: Bearer <token>"` |
+| Rules in the wrong order | A broad rule hides a specific one | Specific first, `anyRequest()` last |
+| `hasRole("ROLE_OPS")` | Never matches (the prefix is added for you) | `hasRole("OPS")` or `hasAuthority("ROLE_OPS")` |
+| Disabling CSRF on a cookie-session app | Forgeable requests | Keep it on when cookies authenticate |
+| Short or committed signing secret | Forgeable tokens | 32+ characters, injected from the environment |
+| Exposing `/actuator/**` anonymously | Config and heap readable by anyone | Role check, or a separate management port |
+| Logging tokens or passwords | Credentials in the log system | Never log them |
+
 ### Step 3. The security configuration
 
 **File:** `src/main/java/com/example/trade/security/SecurityConfig.java`

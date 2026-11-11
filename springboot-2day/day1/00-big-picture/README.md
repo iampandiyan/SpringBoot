@@ -244,6 +244,34 @@ The first run downloads Maven (a minute). Expected first line: `Apache Maven 3.9
 - *Java version shows less than 21*: fix 4.1.
 - Compare: `fc.exe pom.xml "$REF\pom.xml"`.
 
+### Deep dive: `.mvn/wrapper/maven-wrapper.properties`
+
+The wrapper command creates this small configuration file. It is the only file that decides **which Maven** `mvnw` downloads, so it is worth reading once. It lives at `.mvn/wrapper/maven-wrapper.properties`.
+
+**What a `.properties` file is.** Plain text, one `key=value` per line, `#` starts a comment. Java reads this format natively. (Lesson 02 compares it with YAML, which Spring Boot also reads.)
+
+**Our file (3 keys, verified):**
+
+```properties
+wrapperVersion=3.3.4
+distributionType=only-script
+distributionUrl=https://repo.maven.apache.org/maven2/org/apache/maven/apache-maven/3.9.16/apache-maven-3.9.16-bin.zip
+```
+
+| Key | Meaning | Why our value | Other values and options |
+|---|---|---|---|
+| `distributionUrl` | Where `mvnw` downloads Maven from. **This is the line that pins the Maven version.** | The official 3.9.16 zip on Maven Central. | Change the version number to upgrade Maven for the whole team in one commit. Point it at a company mirror (Nexus/Artifactory) when Maven Central is blocked. |
+| `distributionType` | What the wrapper installs. | `only-script`: only the small `mvnw` scripts are committed, and the wrapper downloads the Maven distribution itself. | `bin` (the older style: also commits `maven-wrapper.jar`, which downloads Maven). Prefer `only-script`: no binary jar in git. |
+| `wrapperVersion` | Version of the wrapper scripts that generated the file. | Written by the `wrapper:wrapper` goal. | Do not edit by hand; regenerate with `.\mvnw.cmd wrapper:wrapper "-Dmaven=3.9.16"`. |
+| `distributionSha256Sum` *(not in our file)* | Checksum of the Maven zip. | Not used here. | Add it in security-sensitive builds so a tampered download is rejected. |
+| `wrapperSha256Sum` *(not in our file)* | Checksum of `maven-wrapper.jar` (only with `distributionType=bin`). | Not used. | Same idea for the wrapper jar. |
+
+**Where the download goes.** `C:\Users\<you>\.m2\wrapper\dists\...`. It happens once per Maven version per machine; after that `mvnw` starts instantly.
+
+**How to upgrade Maven for everyone:** edit `distributionUrl` (or rerun `wrapper:wrapper` with a new `-Dmaven=`), commit the file. Every teammate and the CI server picks up the new version on their next `mvnw` run. This is the "works the same on every machine" promise from the Maven deep dive below.
+
+**Commit it.** `.mvn/`, `mvnw` and `mvnw.cmd` belong in git (see `.gitignore` in step 8).
+
 ### Deep dive: Maven, the build tool
 
 Read this after step 1 works, or before it if "Maven" is still a black box. Every command in this lesson starts with `mvnw`, so it pays to understand it once, properly. The next deep dive (`pom.xml`) explains the file; this one explains the **tool**, the **commands** and **which command to use when**.
@@ -877,6 +905,95 @@ Stop the app with `Ctrl+C`.
 - *HTTP 400 and a JSON parse error*: the PowerShell quote escaping. Use the exact form above, or Git Bash.
 - *HTTP 405*: you used GET; both endpoints are POST.
 - *Known flaw (on purpose):* `POST /trades/99/settle` returns **HTTP 500**, because nothing translates the `IllegalArgumentException`. Lesson 03 fixes it with a clean 404.
+
+### Deep dive: the commands you just typed (`curl.exe` and the PowerShell helpers)
+
+Every lesson from here on calls the application with `curl.exe` and uses a few PowerShell commands. This section explains each one once: the **syntax**, **why** it exists and **when** you reach for it. Later lessons only use what is explained here (new commands are explained where they first appear).
+
+#### A. `curl.exe`: talk to an HTTP server from the terminal
+
+**What it is.** `curl` is a small program that sends one HTTP request and prints the response. A browser can only easily send `GET`; `curl` sends any verb, any header and any body, so it is the fastest way to try a REST API.
+
+**Why `curl.exe` and not `curl` in PowerShell.** In Windows PowerShell 5.1, `curl` is an *alias* for `Invoke-WebRequest`, a different command with different options. Writing `curl.exe` (with the extension) bypasses the alias and runs the real program that ships with Windows 10/11. In Git Bash, Linux and macOS you write plain `curl`.
+
+**Syntax.**
+
+```text
+curl.exe [options] <url>
+```
+
+The URL can omit `http://` (`localhost:8080/trades` works). Quote the URL when it contains `?` or `&`, because PowerShell and shells treat `&` specially: `curl.exe "localhost:8080/trades?status=NEW&page=1"`.
+
+**The options we use** (all verified against the lessons' commands):
+
+| Option | Long form | Meaning | When you use it |
+|---|---|---|---|
+| `-s` | `--silent` | Do not print the progress meter. | Always, otherwise you get a noisy progress bar mixed into the output. |
+| `-i` | `--include` | Print the **status line and response headers**, then the body. | When the *status code* or a header (`Location`, `Content-Type`) is the point of the test. |
+| `-I` | `--head` | Send a `HEAD` request: headers only, no body. | Quick "is it up, what type is it?" check. |
+| `-X <VERB>` | `--request` | Choose the HTTP verb: `POST`, `PUT`, `PATCH`, `DELETE`. `GET` is the default. | Every call that is not a `GET`. (`-d` already implies `POST`, but writing `-X POST` makes the intent readable.) |
+| `-H "Name: value"` | `--header` | Add a request header. Repeat it for several. | `-H "Content-Type: application/json"` whenever you send JSON; `-H "Authorization: Bearer <token>"` from lesson 05 on. |
+| `-d '<body>'` | `--data` | The request body. | Creating or changing a resource. |
+| `-u user:password` | `--user` | HTTP Basic authentication. | Lesson 05's `/auth/token` login. |
+| `-o <file>` | `--output` | Write the body to a file instead of the screen. `-o NUL` discards it (Windows). | When you only need the status code (see `-w`). |
+| `-w "<format>"` | `--write-out` | After the transfer print a formatted value such as `%{http_code}`. | Scripts and quick status checks: `curl.exe -s -o NUL -w "%{http_code}" localhost:8080/actuator/beans`. |
+| `-v` | `--verbose` | Print the whole conversation, request lines included. | "What exactly did curl send?" |
+| `-L` | `--location` | Follow redirects. | A `301/302` response and you want the final page. |
+| `-f` | `--fail` | Exit with an error on HTTP 4xx/5xx instead of printing the error body. | Shell scripts that must stop on failure. |
+| `--max-time <s>` | | Give up after that many seconds. | Calls to something that may hang. |
+| `--data-binary @file.json` | | Send a file's content as the body, unchanged. | A long JSON body: put it in a file and avoid all quoting problems. |
+
+**Reading the call from lesson 00 piece by piece:**
+
+```powershell
+curl.exe -s -X POST localhost:8080/trades -H "Content-Type: application/json" -d '{\"isin\":\"US0378331005\",\"quantity\":100,\"price\":189.50}'
+```
+
+| Piece | Meaning |
+|---|---|
+| `-s` | no progress meter |
+| `-X POST` | the verb: create something |
+| `localhost:8080/trades` | host, port and path. `localhost` is your own computer |
+| `-H "Content-Type: application/json"` | tells the server how to read the body. Without it Spring answers `415 Unsupported Media Type` |
+| `-d '{...}'` | the JSON body. The `\"` is PowerShell quoting (next part) |
+
+**PowerShell quoting, the one trap.** Windows PowerShell 5.1 removes the inner double quotes when it hands a string to a native program. So a JSON body in single quotes needs each inner `"` written as `\"`. Two ways around it:
+
+```powershell
+# 1. Put the body in a file, send the file: no escaping at all.
+Set-Content -Path body.json -Value '{"isin":"US0378331005","quantity":100,"price":189.50}'
+curl.exe -s -X POST localhost:8080/trades -H "Content-Type: application/json" --data-binary "@body.json"
+
+# 2. Use Git Bash, Linux or macOS, where plain '{"isin":"US0378331005"}' works.
+```
+
+**Common curl mistakes**
+
+| Symptom | Cause | Fix |
+|---|---|---|
+| `415 Unsupported Media Type` | Missing `Content-Type` header | Add `-H "Content-Type: application/json"` |
+| `400` and a JSON parse error | Quotes mangled by PowerShell | Use `\"` escaping or `--data-binary "@file"` |
+| `405 Method Not Allowed` | Wrong verb (a `GET` to a `POST` URL) | Add `-X POST` |
+| `curl: (7) Failed to connect` | The app is not running, or another port | Start the app; check the `Tomcat started on port` line |
+| Strange object output, not JSON | You typed `curl`, the PowerShell alias | Type `curl.exe` |
+
+#### B. The other terminal commands in these lessons
+
+| Command | Syntax | What it does | Why / when |
+|---|---|---|---|
+| `java -version` | `java -version` | Prints the version of the Java on your `PATH`. | First check on any machine. Must say 21. |
+| `pwd` | `pwd` | Prints the current folder (PowerShell alias of `Get-Location`). | Before running `mvnw`: it only works in the folder that holds `pom.xml`. |
+| `ls` | `ls` or `ls <folder>` | Lists a folder (alias of `Get-ChildItem`). | "Did the file get created? Is `target/` there?" |
+| `java -jar` | `java -jar <file.jar> [--key=value ...]` | Runs a packaged jar. Arguments after the jar name become Spring properties. | What production does. Example: `java -jar target\trade-service-0.0.1-SNAPSHOT.jar --server.port=8081`. |
+| `java -D` | `java -Dname=value -jar app.jar` | Sets a **JVM system property** *before* the jar name. | Another way to set a Spring property: `-Dserver.port=9091`. Order matters: `-D` goes **before** `-jar`. |
+| `$REF = "path"` | `$name = "value"` | Stores text in a PowerShell **variable**, valid for this terminal only. | Used as `"$REF\pom.xml"` so you type the long course path once. |
+| `$env:NAME = "value"` | `$env:NAME = "value"` | Sets an **environment variable** for this terminal and the programs it starts. | Passing a secret or a setting to the app without a file (lesson 05: `$env:JWT_SECRET`). |
+| `fc.exe` | `fc.exe <yourfile> <otherfile>` | **F**ile **c**ompare: prints the differing lines, or `FC: no differences encountered`. | Comparing your file with the reference copy. |
+| `Select-String` | `<command> \| Select-String "<regex>"` | PowerShell's grep: keeps only the lines that match. | Filtering long Maven output (lesson 06). |
+| `Start-Process` | `Start-Process <file or url>` | Opens a file with its default program. | Opening the coverage HTML report in the browser (lesson 06). |
+| `Ctrl+C` | key | Stops the program running in the terminal. | Stopping `spring-boot:run` or `java -jar`. |
+
+**Exit codes, the idea behind every "silent means success".** Every program ends with a number: `0` means success, anything else means failure. PowerShell stores the last one in `$LASTEXITCODE`. Run `.\mvnw.cmd -q compile` and then `$LASTEXITCODE`: `0` after a good build. CI servers decide pass or fail from that number alone.
 
 ### Step 7. A unit test: the service works without Spring
 

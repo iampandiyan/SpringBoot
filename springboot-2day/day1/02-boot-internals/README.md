@@ -300,6 +300,173 @@ YAML is whitespace-sensitive: **two spaces per level, never tabs**.
 
 **Stuck?** *`mapping values are not allowed here`* at startup later: wrong indentation or a tab.
 
+### Deep dive: `application.yml`, the configuration files
+
+You just created three configuration files. This section explains what they are, how Spring Boot finds and merges them, what each key does, and the options we did **not** use.
+
+#### A. What is it, and why do we need it?
+
+An `application.yml` (or `application.properties`) is a text file that holds **settings** the program reads at startup: the port, the database URL, log levels, your own limits. Putting settings in a file (not in Java code) means the **same jar** runs on a laptop, in test and in production with different values and no rebuild. That is the "externalized configuration" promise of Spring Boot, and the third factor of the *12-factor app*: *store config in the environment*.
+
+| It is | It is not |
+|---|---|
+| Read by Spring Boot at startup, from the classpath (`src/main/resources` is copied into the jar) | A Maven file. Maven does not read it (it only copies it) |
+| Merged with command-line arguments, environment variables and other sources, with a fixed precedence (the picture in section 3) | The only place settings can come from |
+| Safe for non-secret settings | A place for passwords. Secrets come from environment variables or a secret store |
+
+#### B. YAML or `.properties`? Two spellings of the same thing
+
+Boot reads both. Our lessons use YAML; the maven-wrapper file in lesson 00 used properties.
+
+```properties
+# application.properties
+management.endpoints.web.exposure.include=health,info
+trade.max-quantity=1000000
+```
+
+```yaml
+# application.yml (the same two settings)
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+trade:
+  max-quantity: 1000000
+```
+
+| | `.properties` | `.yml` |
+|---|---|---|
+| Structure | Flat dotted keys | Nesting by indentation (no repeated prefixes) |
+| Lists | `a[0]=x`, `a[1]=y` | `a:` then `- x` lines (or `a: x,y` for a simple list) |
+| Comments | `#` | `#` |
+| Risk | None | **Indentation is meaning**: two spaces per level, **never tabs** |
+| Several profiles in one file | Not possible | Yes, with `---` separators (see D) |
+
+If both files exist in the same place, **`.properties` wins**. Pick one format per project and stay with it.
+
+**YAML types in one minute:** `port: 8080` is a number; `enabled: false` a boolean; `name: trade-service` a string. Quote a value that starts with `*`, `{` or `[`, or that contains `: ` (as in `include: "*"`). Values such as `yes`, `no` or `010` can be read as other types, so quote them when you mean text.
+
+#### C. Where Boot looks, and in what order (lowest to highest priority)
+
+| # | Source | Example | Notes |
+|---|---|---|---|
+| 1 | Defaults in code | `@DefaultValue("XLON")`, `@Value("${x:default}")` | Lowest |
+| 2 | `application.yml` / `.properties` **inside the jar** | `classpath:/application.yml` | Our base file |
+| 3 | `application-{profile}.yml` inside the jar | `application-prod.yml` | Only when that profile is active |
+| 4 | `application.yml` **next to the jar** or in `./config/` | `.\config\application.yml` | Lets operations override without rebuilding |
+| 5 | `application-{profile}.yml` outside the jar | | |
+| 6 | **Environment variables** | `TRADE_MAX_QUANTITY=500` | The standard in containers |
+| 7 | **Java system properties** | `java -Dtrade.venue=XNYS -jar app.jar` | |
+| 8 | **Command-line arguments** | `--trade.venue=XNYS` | Highest |
+
+For files, Boot searches the classpath root, `classpath:/config/`, the current folder and `./config/`; later locations override earlier ones. A key in a higher source hides the same key in a lower one; other keys are merged. That is why `application-prod.yml` only lists what **differs** from the base.
+
+#### D. Profiles: one codebase, several environments
+
+A **profile** is a named set of settings, switched on at startup.
+
+| How to activate | Example |
+|---|---|
+| Property | `spring.profiles.active=prod` |
+| Command line | `java -jar app.jar --spring.profiles.active=prod` |
+| Environment variable | `SPRING_PROFILES_ACTIVE=prod` |
+| Maven run | `.\mvnw.cmd "-Dspring-boot.run.profiles=prod" spring-boot:run` |
+| Tests | `@ActiveProfiles("prod")` |
+
+- `spring.profiles.default: dev` (ours) applies **only** when no profile is active. Activating `prod` replaces it; it does not add to it.
+- Several at once: `--spring.profiles.active=prod,eu`. Later ones win on conflicts.
+- **Profile groups** activate several profiles from one name: `spring.profiles.group.prod: prod-db,prod-security`.
+- **One file, many profiles** (YAML only): separate documents with `---` and name each with `spring.config.activate.on-profile`:
+
+```yaml
+trade:
+  venue: XLON
+---
+spring:
+  config:
+    activate:
+      on-profile: prod
+trade:
+  venue: XNYS
+```
+
+- Beans can also be tied to a profile: `@Profile("dev")`.
+
+#### E. Writing a value in terms of another, and reading it in code
+
+| Feature | Example | Result |
+|---|---|---|
+| Placeholder with default | `jwt.secret: ${JWT_SECRET:dev-only-secret}` | Take the environment variable `JWT_SECRET`; if absent, use `dev-only-secret` |
+| Reference another key | `info.app.venue: ${trade.venue}` | Repeats the value; one place to change |
+| **Relaxed binding** | `trade.max-quantity`, `trade.maxQuantity`, `TRADE_MAX_QUANTITY` | All bind to the same field. Use **kebab-case** in files and **UPPER_SNAKE_CASE** for environment variables |
+| `@ConfigurationProperties` | our `TradeProperties` | Type-safe, validated, one object for a whole prefix (preferred) |
+| `@Value("${trade.venue}")` | a single field | Quick for one value; no validation and no relaxed binding of the name |
+
+For a list in an environment variable use `MY_LIST_0=a`, `MY_LIST_1=b`, or a comma-separated value.
+
+#### F. Our three files, key by key
+
+| File | Key | Why that value |
+|---|---|---|
+| `application.yml` | `spring.application.name` | Appears in logs and, later, in tracing and service discovery |
+| | `spring.profiles.default: dev` | A plain run behaves like a laptop run |
+| | `trade.*` | Our own settings, bound to `TradeProperties` |
+| | `audit.enabled: false` | Feeds `@ConditionalOnProperty` in step 7 |
+| | `management.endpoints.web.exposure.include: health,info` | Safe default: only two endpoints reachable over HTTP |
+| | `management.info.env.enabled` and `info.*` | What `/actuator/info` prints |
+| `application-dev.yml` | `include: "*"`, `show-details: always` | Everything visible while developing |
+| | `logging.level.com.example.trade: DEBUG` | Our own package logs at debug |
+| `application-prod.yml` | `show-details: never`, `probes.enabled: true` | Hide internals, enable Kubernetes probes |
+| | `trade.max-quantity: 500000` | A stricter business limit in production |
+| | `logging.level.com.example.trade: INFO` | Quiet logs |
+
+#### G. Common keys you did not use (and when you would)
+
+| Key | Default | What it does |
+|---|---|---|
+| `server.port` | `8080` | HTTP port. `0` picks a random free port (useful in tests) |
+| `server.servlet.context-path` | `/` | Prefix for every URL, for example `/api` |
+| `server.shutdown` | `immediate` | `graceful` finishes in-flight requests first; pair it with `spring.lifecycle.timeout-per-shutdown-phase: 30s` |
+| `server.compression.enabled` | `false` | gzip responses |
+| `server.error.include-message`, `include-stacktrace` | `never` | Whether the default error body shows the message or a stack trace. Keep `never` |
+| `server.tomcat.threads.max` | `200` | Maximum request threads |
+| `server.tomcat.max-connections`, `accept-count` | `8192`, `100` | Connection and queue limits |
+| `spring.main.banner-mode` | `console` | `off` hides the ASCII banner |
+| `spring.main.lazy-initialization` | `false` | `true` creates beans on first use: faster startup, errors appear later |
+| `spring.main.web-application-type` | detected | `none` for an app with no web server (our tests use it) |
+| `spring.config.import` | none | Pull in another file or a config server: `optional:file:./local.yml` |
+| `spring.jackson.*` | | JSON options (lesson 03) |
+| `spring.servlet.multipart.*` | | File-upload limits |
+| `logging.level.<logger>` | `INFO` | Level per package or class: `TRACE, DEBUG, INFO, WARN, ERROR, OFF` |
+| `logging.file.name`, `logging.logback.rollingpolicy.*` | console only | Write a log file and roll it by size or date |
+| `logging.pattern.console` | Boot's pattern | Change the log line layout |
+| `debug: true` | `false` | Same as `--debug`: print the conditions report |
+
+#### H. The logging setup you got for free
+
+Boot uses **SLF4J** (the logging API your code calls: `LoggerFactory.getLogger(...)`) with **Logback** (the engine that writes the lines). `logging.level.*` changes levels without any Logback file. When you need more (JSON logs, several outputs) you add `logback-spring.xml` in `src/main/resources`; Boot picks it up and lets you use `<springProfile>` blocks inside it. Lesson 10 uses JSON logs for containers.
+
+#### I. How to check which value won
+
+Run the app, then:
+
+```powershell
+curl.exe -s localhost:8080/actuator/env/trade.max-quantity
+curl.exe -s localhost:8080/actuator/configprops
+```
+
+The first prints the final value **and which source supplied it** (for a port set on the command line it names `commandLineArgs`, which we saw when checking `server.port`). Secrets appear as `******`.
+
+| Mistake | Symptom | Fix |
+|---|---|---|
+| Tab character in YAML | `found character '\t' that cannot start any token` | Spaces only, two per level |
+| Wrong indentation | The setting is ignored, or `mapping values are not allowed here` | Compare with the nesting shown above |
+| Unquoted `*` | YAML alias error | `include: "*"` |
+| `.properties` file next to `.yml` | The YAML value seems ignored | `.properties` wins; keep one format |
+| Wrong profile file name | Profile file ignored | It must be `application-<profile>.yml`, and the profile must be active |
+| Typing `maxQuantity` as an environment variable | Not bound | `TRADE_MAX_QUANTITY` |
+
 ### Step 3. The type-safe properties class
 
 **File:** `src/main/java/com/example/trade/config/TradeProperties.java`
@@ -484,6 +651,163 @@ Stop the app with `Ctrl+C`. Delete the two JSON files.
 **Stuck?**
 - *404 on `/actuator/beans`*: you are not in the `dev` profile. Check the first startup log line says `falling back to 1 default profile: "dev"`.
 - *Connection refused*: the app did not start; read the first error in the first terminal.
+
+### Deep dive: Spring Boot Actuator and Micrometer
+
+You added `spring-boot-starter-actuator` in step 1 and used it in step 5. This section is the complete explanation: what it is, why it exists, every endpoint, how to configure it, and how it connects to monitoring systems.
+
+#### A. What is it?
+
+**Actuator** is a Spring Boot module that adds **production-ready endpoints** to a running application: health, metrics, configuration, loggers, thread dump and more. The word comes from mechanical engineering: a device that moves or controls something. You do not write these endpoints; adding the starter registers them.
+
+**Micrometer** is the metrics library behind `/actuator/metrics`. It is to metrics what SLF4J is to logging: a neutral API (counters, gauges, timers) with a plug-in "registry" per monitoring system (Prometheus, Datadog, CloudWatch, Elastic...). Your code records a metric once; the registry decides where it goes. Micrometer also provides the tracing API used on Day 2.
+
+#### B. Why do we need it?
+
+A service you cannot observe cannot be operated. Operations people and platforms need answers to: *Is it alive? Is it ready for traffic? How many requests, how slow? What is the heap doing? Which settings did it really start with? Can I raise a log level without a restart?* Without Actuator each team would invent its own `/status` page. With it, Kubernetes, load balancers, Prometheus and humans all use the same standard endpoints.
+
+#### C. How it works
+
+[![How /actuator/health decides UP or DOWN](images/02-health-aggregation.png)](images/02-health-aggregation.svg)
+
+- Each **endpoint** has an id (`health`). It can be **exposed** over HTTP and/or JMX and **enabled or restricted** independently. Both must allow it.
+- HTTP endpoints live under the base path `/actuator`.
+- Beans of type `HealthIndicator` are collected and aggregated into the `health` endpoint; `MeterBinder`s feed Micrometer.
+
+#### D. The endpoints (verified: the 13 below appeared with `include: "*"` in our `dev` profile)
+
+| Endpoint | What it returns | When you use it |
+|---|---|---|
+| `health` | `UP` / `DOWN` plus components (disk space, ping, ssl, our gateway) | Load balancer and Kubernetes probes; first check after a deployment |
+| `info` | Free-form data: our `info.*` keys, build and git info | "Which version is running?" |
+| `metrics` | List of meter names; `/actuator/metrics/<name>` gives one value | CPU, heap, `http.server.requests`, thread pools |
+| `env` | Properties, **with the source of each value** | "Why is my setting not what I expected?" |
+| `configprops` | Every `@ConfigurationProperties` bean and its bound values | Check our `TradeProperties` |
+| `beans` | Every bean in the context and its dependencies | Understand wiring; find duplicates |
+| `conditions` | The auto-configuration report (positive and negative matches) | "Why did Boot (not) configure X?" |
+| `mappings` | Every URL mapping and its controller method | "Is my endpoint registered?" |
+| `loggers` | Level of each logger; **`POST` changes a level at runtime** | Turn on `DEBUG` for one package without a restart |
+| `threaddump` | All threads and their stacks | A hung or slow service |
+| `caches` | Cache names and managers | When caching is used |
+| `scheduledtasks` | `@Scheduled` jobs | Batch-style services |
+| `sbom` | Software bill of materials, if generated at build time | Supply-chain checks |
+
+Endpoints that exist but did **not** appear in our list because their conditions are not met:
+
+| Endpoint | Appears when | What it does |
+|---|---|---|
+| `shutdown` | enabled explicitly | Stops the application. **Never** expose it without strong security |
+| `heapdump` | present on supported JVMs when exposed | Downloads a heap dump: it contains **secrets in memory**, protect it |
+| `logfile` | `logging.file.name` is set | Returns the log file |
+| `prometheus` | `micrometer-registry-prometheus` on the classpath | Metrics in the Prometheus text format |
+| `httpexchanges` | an `HttpExchangeRepository` bean exists | Recent requests |
+| `auditevents` | an `AuditEventRepository` bean exists | Security audit events |
+| `flyway`, `liquibase` | that library is used | Applied database migrations |
+| `startup` | `SpringApplication.setApplicationStartup(...)` | Startup timeline |
+
+#### E. Health in detail
+
+`/actuator/health` returns the **worst** status of its components (`DOWN` beats `UP`). Built-in indicators appear only when their library is present: `diskSpace`, `ping`, `ssl`, plus `db`, `redis`, `rabbit`, `mongo` and others when you use those.
+
+| Setting | Values | Meaning |
+|---|---|---|
+| `management.endpoint.health.show-details` | `never` (default), `when-authorized`, `always` | Whether the `components` section is visible. `never` still gives `{"status":"UP"}` |
+| `management.endpoint.health.show-components` | same values | Show component names and status without details |
+| `management.endpoint.health.roles` | e.g. `ADMIN` | Who counts as "authorized" |
+| `management.endpoint.health.probes.enabled` | `true` | Adds `/actuator/health/liveness` and `/actuator/health/readiness` |
+| `management.endpoint.health.group.<name>.include` | list of indicators | Define your own group, e.g. `readiness` includes `db,gateway` |
+| `management.health.<name>.enabled` | `false` | Switch off one built-in indicator (`management.health.diskspace.enabled`) |
+| `management.endpoint.health.status.http-mapping.<STATUS>` | HTTP code | Map `DOWN` to 503 (the default) or others |
+
+**Liveness vs readiness** (said in section 3, repeated because it is asked in interviews): liveness = "restart me if false", so it must **not** depend on external systems; readiness = "send me traffic if true", so it **may** depend on the database or a gateway.
+
+#### F. Exposure and access: the two switches
+
+```yaml
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics     # which endpoints are reachable over HTTP
+        exclude: heapdump                # carve out exceptions from "*"
+      base-path: /actuator               # change the URL prefix
+    jmx:
+      exposure:
+        include: "*"                     # JMX has its own list (default: health only)
+  endpoint:
+    shutdown:
+      access: none                       # Boot 3.4+: none | read-only | unrestricted
+    health:
+      show-details: when-authorized
+  server:
+    port: 9090                           # serve Actuator on a separate management port
+```
+
+| Setting | Why |
+|---|---|
+| `exposure.include` / `exclude` | The security switch for HTTP. Default is `health` only. **Never** use `"*"` in production without authentication |
+| `management.endpoint.<id>.access` | Restricts an endpoint (Boot 3.4+). Older versions use `management.endpoint.<id>.enabled=false` |
+| `management.server.port` | A **separate port** for Actuator that is not exposed to the internet (only to the cluster or the monitoring system). A common production pattern |
+| `management.endpoints.web.base-path` | Move `/actuator` to an unguessable or company-standard path |
+| `management.endpoint.<id>.cache.time-to-live` | Cache an expensive endpoint's response |
+
+Lesson 05 secures all of this: `health` and `info` are public, the rest needs the `ADMIN` role.
+
+#### G. Metrics and Micrometer in practice
+
+```powershell
+curl.exe -s localhost:8080/actuator/metrics
+curl.exe -s localhost:8080/actuator/metrics/jvm.memory.used
+curl.exe -s "localhost:8080/actuator/metrics/http.server.requests?tag=status:404"
+```
+
+| Meter type | Meaning | Example |
+|---|---|---|
+| **Counter** | Only goes up | Trades created, orders rejected |
+| **Gauge** | Goes up and down; sampled | Queue size, heap used |
+| **Timer** | Count, total time and max of short events (also percentiles) | `http.server.requests` |
+| **Distribution summary** | Like a timer for non-time values | Message size |
+
+Every meter can have **tags** (dimensions) such as `status`, `uri`, `method`; a monitoring system slices by them. Beware **high-cardinality tags** (user id, trade id): every distinct value creates a new time series and can overload the monitoring system. Use the URI **template** (`/trades/{id}`, which Spring does for you), never the filled-in URL.
+
+Recording your own metric (an illustration, not a file the course needs):
+
+```java
+@Service
+public class TradeService {
+    private final Counter created;
+    public TradeService(TradeRepository repository, MeterRegistry registry) {
+        this.repository = repository;
+        this.created = Counter.builder("trades.created").tag("venue", "XLON").register(registry);
+    }
+    // ... in create(): created.increment();
+}
+```
+
+Common settings: `management.metrics.tags.application=trade-service` (a tag added to every meter), `management.metrics.distribution.percentiles-histogram.http.server.requests=true` (histogram buckets so the monitoring system can compute percentiles), `management.prometheus.metrics.export.enabled`.
+
+**Connecting a monitoring system:** add the registry dependency (for example `io.micrometer:micrometer-registry-prometheus`), expose the `prometheus` endpoint, and let Prometheus scrape `/actuator/prometheus` on a schedule (pull model). Datadog or CloudWatch registries push instead. Day 2 file 07 builds on this for resilience metrics.
+
+#### H. Changing a log level at runtime
+
+```powershell
+# Syntax: POST /actuator/loggers/<logger name> with the new level
+curl.exe -s -X POST localhost:8080/actuator/loggers/com.example.trade -H "Content-Type: application/json" -d '{\"configuredLevel\":\"DEBUG\"}'
+curl.exe -s localhost:8080/actuator/loggers/com.example.trade
+```
+
+The second call returns `configuredLevel` and `effectiveLevel` (we saw `DEBUG` for our dev profile when listing it earlier). Send `{"configuredLevel":null}` to reset. The change lasts until restart. It is the production-support tool for "turn on debug for ten minutes".
+
+#### I. Security of Actuator
+
+`env`, `beans`, `heapdump` and `threaddump` reveal internals. Rules: expose the minimum; put the rest behind authentication and a role; consider `management.server.port`; keep `shutdown` closed. Boot masks values of keys like `password`, `secret`, `token` as `******` by default (`management.endpoint.env.show-values`, `configprops.show-values`: `NEVER`, `ALWAYS`, `WHEN_AUTHORIZED`).
+
+| Mistake | Consequence | Fix |
+|---|---|---|
+| `include: "*"` in production | Anyone can read your configuration and heap | Whitelist: `health,info` (plus `prometheus` on a protected port) |
+| Database check in the liveness group | A database outage restarts every healthy pod | Put dependencies in readiness only |
+| Detailed health shown to anonymous callers | Reveals disk paths, component names | `show-details: when-authorized` or `never` |
+| High-cardinality metric tag | Monitoring system overload and cost | Tag with bounded values only |
 
 ### Step 6. A custom health indicator
 

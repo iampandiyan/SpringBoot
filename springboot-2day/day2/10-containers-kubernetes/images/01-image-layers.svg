@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 400" font-family="Arial, Helvetica, sans-serif">
+<defs><marker id="a" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#333"/></marker></defs>
+<rect width="900" height="400" fill="#ffffff"/>
+<text x="450.0" y="30" font-size="20" text-anchor="middle" fill="#1a1a1a" font-weight="bold">The Docker image: layers, least-changing at the bottom</text>
+<rect x="60" y="60" width="400" height="50" rx="8" fill="#f3f4f6" stroke="#6b7280" stroke-width="2"/>
+<text x="260.0" y="89.33333333333333" font-size="13" text-anchor="middle" fill="#1a1a1a">eclipse-temurin:21-jre-jammy  (Java 21 + Linux)</text>
+<rect x="60" y="120" width="400" height="60" rx="8" fill="#e8f1fb" stroke="#2f6fb5" stroke-width="2"/>
+<text x="260.0" y="144.83333333333334" font-size="13" text-anchor="middle" fill="#1a1a1a">dependencies/  lib/*.jar  about 89 MB</text>
+<text x="260.0" y="163.83333333333334" font-size="13" text-anchor="middle" fill="#1a1a1a">changes only when pom.xml changes</text>
+<rect x="60" y="190" width="400" height="50" rx="8" fill="#e8f1fb" stroke="#2f6fb5" stroke-width="2"/>
+<text x="260.0" y="219.33333333333334" font-size="13" text-anchor="middle" fill="#1a1a1a">snapshot-dependencies/  (none here)</text>
+<rect x="60" y="250" width="400" height="60" rx="8" fill="#fff8e1" stroke="#c79100" stroke-width="2"/>
+<text x="260.0" y="274.8333333333333" font-size="13" text-anchor="middle" fill="#1a1a1a">application/  app.jar  about 111 KB</text>
+<text x="260.0" y="293.8333333333333" font-size="13" text-anchor="middle" fill="#1a1a1a">changes on EVERY build</text>
+<rect x="60" y="320" width="400" height="50" rx="8" fill="#eaf6ec" stroke="#2e8b57" stroke-width="2"/>
+<text x="260.0" y="349.3333333333333" font-size="13" text-anchor="middle" fill="#1a1a1a">USER 10001 + ENTRYPOINT java -jar app.jar</text>
+<text x="500" y="100" font-size="14" text-anchor="start" fill="#1a1a1a" font-weight="bold">Docker caches each layer by its content.</text>
+<text x="500" y="130" font-size="14" text-anchor="start" fill="#1a1a1a">You change one class and rebuild:</text>
+<text x="500" y="156" font-size="14" text-anchor="start" fill="#1a1a1a">- the 89 MB dependency layer is REUSED</text>
+<text x="500" y="180" font-size="14" text-anchor="start" fill="#1a1a1a">- only the 111 KB application layer is rebuilt</text>
+<text x="500" y="204" font-size="14" text-anchor="start" fill="#1a1a1a">- a push to the registry sends 111 KB, not 89 MB</text>
+<text x="500" y="250" font-size="14" text-anchor="start" fill="#1a1a1a">If we kept one fat jar layer, every build</text>
+<text x="500" y="274" font-size="14" text-anchor="start" fill="#1a1a1a">would rebuild and push all 89 MB again.</text>
+<text x="500" y="320" font-size="14" text-anchor="start" fill="#1a1a1a" font-weight="bold">Stage 1 of the Dockerfile only SPLITS the jar</text>
+<text x="500" y="344" font-size="14" text-anchor="start" fill="#1a1a1a">(java -Djarmode=tools extract --layers).</text>
+<text x="500" y="368" font-size="14" text-anchor="start" fill="#1a1a1a">Stage 2 is the image that actually ships.</text>
+</svg>

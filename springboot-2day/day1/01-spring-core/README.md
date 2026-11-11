@@ -215,6 +215,82 @@ public class TimingAspect {
 
 **Stuck?** *`package org.aspectj.lang does not exist`*: Step 1 was not saved, or the dependency is outside the `<dependencies>` tag.
 
+### Deep dive: Spring AOP and AspectJ, the framework behind `@Aspect`
+
+Step 1 added `spring-boot-starter-aop`, which brought a new library, **AspectJ**. This section explains what it is, why we need it, what you can write with it and what you cannot.
+
+#### A. What is it, and who is who?
+
+| Name | What it is |
+|---|---|
+| **AOP** (aspect-oriented programming) | A programming idea: write a cross-cutting concern (timing, security, transactions, logging) **once**, and say declaratively where it applies, instead of copying it into every method. |
+| **AspectJ** | The original, complete AOP language and compiler for Java (2001). It can change the bytecode itself, at compile time or class-load time ("weaving"). |
+| **Spring AOP** | Spring's own, simpler AOP. It uses **runtime proxies** and supports only *method execution* on Spring beans. It **borrows AspectJ's annotations** (`@Aspect`, `@Around`) and its pointcut expression language, but does **not** use the AspectJ compiler. |
+| `spring-boot-starter-aop` | The dependency that brings `spring-aop` plus the `aspectjweaver` library (which parses the annotations and pointcut text). Boot then auto-configures the proxy creator. |
+
+#### B. Why do we need it?
+
+Without AOP, timing every service method means a `try/finally` with `System.nanoTime()` in each of them: the business rule is buried, the code is repeated, and a new method can forget it. AOP removes the repetition. It is also how Spring delivers `@Transactional`, `@Cacheable`, `@Async` and `@PreAuthorize`: all of them are aspects applied through a proxy, so understanding this one picture explains them all.
+
+#### C. Vocabulary, mapped to our `TimingAspect`
+
+| Term | Meaning | In our file |
+|---|---|---|
+| **Aspect** | A class holding cross-cutting logic. | `TimingAspect` (`@Aspect`) |
+| **Join point** | A point in execution where advice *could* run. In Spring AOP: a **method execution** only. | each call to a `TradeService` method |
+| **Pointcut** | A predicate that selects join points. | `execution(* com.example.trade.service..*(..))` |
+| **Advice** | The code to run at the selected join points. | the method `time(...)` |
+| **Target** | The real object being wrapped. | the real `TradeService` |
+| **Proxy** | The object Spring hands out instead of the target. | a generated `TradeService$$SpringCGLIB$$0` |
+| **Weaving** | Linking aspects to targets. Spring does it at startup by creating proxies. | `AnnotationAwareAspectJAutoProxyCreator` (a bean post-processor) |
+
+#### D. The five kinds of advice
+
+| Annotation | Runs | Can it change the result? | Typical use |
+|---|---|---|---|
+| `@Before` | Before the method. | No (it can throw to stop the call). | Argument checks, audit "who called". |
+| `@AfterReturning` | After a **normal** return. | It can read the result (`returning = "r"`), not replace it. | Audit of successful operations. |
+| `@AfterThrowing` | After an **exception**. | It can read the exception (`throwing = "ex"`). | Alerting, translating failures. |
+| `@After` | After the method, **always** (like `finally`). | No. | Cleanup. |
+| `@Around` | Around the call; **you** decide whether and when to call `pjp.proceed()`. | **Yes**: change arguments, result or skip the call. | Timing, retry, caching, transactions. The most powerful, so use the weakest advice that does the job. |
+
+#### E. Pointcut expressions: the syntax
+
+```text
+execution( modifiers? return-type  declaring-type? method-name ( params ) throws? )
+```
+
+Wildcards: `*` matches any one name or type, `..` matches any number of packages (in a type pattern) or any number of arguments (in a parameter list).
+
+| Expression | Selects |
+|---|---|
+| `execution(* com.example.trade.service.*.*(..))` | Every method of every class **directly** in `service`. |
+| `execution(* com.example.trade.service..*(..))` | Every method in `service` **and its sub-packages** (what we use). |
+| `execution(public * *(..))` | Every public method. |
+| `execution(* settle*(..))` | Methods whose name starts with `settle`. |
+| `execution(* *(Long))` | Methods with exactly one `Long` argument. |
+| `within(com.example.trade.service..*)` | Every join point inside those types (like `execution(* ..*(..))` for the package). |
+| `@annotation(org.springframework.transaction.annotation.Transactional)` | Methods that carry that annotation. |
+| `@within(org.springframework.stereotype.Service)` | Methods of classes annotated `@Service`. |
+| `bean(tradeService)` | The Spring bean with that name (a Spring-only extra). |
+| `this(...)`, `target(...)`, `args(...)` | Match on the proxy type, target type or argument types; `args` can also **bind** arguments to advice parameters. |
+
+Combine with `&&`, `||`, `!`. Give a pointcut a name with `@Pointcut("execution(...)") void inService() {}` and reuse it as `@Around("inService()")`.
+
+#### F. What Spring AOP cannot do (and what then)
+
+| Limit | Consequence | If you need it |
+|---|---|---|
+| Only **method execution** | No field access, constructor or static-method advice. | Full AspectJ with a compile-time or load-time weaver (`aspectj-maven-plugin`), rarely used. |
+| Only **Spring beans** | Objects created with `new` are not advised. | Make it a bean. |
+| Only calls that go **through the proxy** | Self-invocation (`this.b()`) bypasses advice: the trap in this lesson. | Move `b()` to another bean, or inject the bean into itself. |
+| **CGLIB** subclass proxies | `final` classes and `final` methods cannot be advised; `private` methods are not seen. | Remove `final`; make the method public. |
+| Cost | Each advised call adds a small, fixed overhead. | Fine for services; avoid advising tiny methods in tight loops. |
+
+**Options you did not use** (Spring Boot property, in `application.yml`): `spring.aop.proxy-target-class` (default `true`: always CGLIB, even when the bean implements an interface; set `false` for JDK interface proxies) and `spring.aop.auto` (default `true`: turn automatic proxying off with `false`).
+
+**Order of several aspects:** put `@Order(n)` on each aspect class; lower runs first (outermost). `@Transactional` has its own order, which matters when your aspect and a transaction must nest in a specific way.
+
 ### Step 3. A runner that calls the service at startup
 
 **File:** `src/main/java/com/example/trade/DemoRunner.java`
